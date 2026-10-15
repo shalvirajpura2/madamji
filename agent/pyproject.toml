@@ -1,0 +1,28 @@
+[project]
+name = "ustaad-agent"
+version = "0.1.0"
+description = "Ustaad voice teacher agent"
+authors = [
+    { name = "shalvirajpura2", email = "ceshalvi@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "indic-transliteration>=2.3.82",
+    "livekit-agents[google,sarvam,silero,turn-detector]~=1.8.7",
+    "livekit-plugins-noise-cancellation>=0.3.2",
+    "python-dotenv>=1.2.4",
+    "supabase>=2.32.0",
+]
+
+[project.scripts]
+ustaad-agent = "ustaad_agent:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
