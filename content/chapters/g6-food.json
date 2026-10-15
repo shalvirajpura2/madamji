@@ -1,0 +1,192 @@
+{
+  "id": "g6-food",
+  "grade": 6,
+  "order": 2,
+  "title": "Mindful Eating",
+  "book": "NCERT Curiosity, Chapter 3",
+  "tagline": "Why do we need dal, roti and sabzi, not just chips and sweets?",
+  "icon": "food",
+  "keyterms": ["millets", "ragi", "jowar", "bajra", "nutrients", "carbohydrates", "proteins", "fats", "vitamins", "minerals", "roughage", "dietary fibre", "iodine", "balanced diet", "scurvy", "rickets", "goitre", "anaemia"],
+  "sections": [
+    {
+      "id": "variety",
+      "title": "Food across India",
+      "beats": [
+        {
+          "board": "What we eat depends on climate and crops grown nearby",
+          "teach": "Ask them to picture lunch in different parts of India: rice and fish in Kerala or West Bengal, roti and sarson ka saag in Punjab, bajra roti in Rajasthan, ragi mudde in Karnataka. Explain that people mostly eat what grows well around them, and that depends on the soil, rain and weather."
+        },
+        {
+          "board": "Millets: ragi, jowar, bajra = small grains, big nutrition",
+          "teach": "Millets are small grains like ragi, jowar and bajra. They are rich in nutrients, need much less water than rice, and grow even in dry places. India celebrated 2023 as the International Year of Millets and calls them Shree Anna. Mention their dadi-nani probably ate more millets than we do."
+        },
+        {
+          "board": "Food habits change: more packaged food today",
+          "teach": "Our food habits change over time. Earlier people ate more home-cooked and local food. Today we eat a lot more packaged food like chips, biscuits and cold drinks. Ask them to think about how their own plate is different from their grandparents' plate, then answer it yourself lightly."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "Which of these is a millet?",
+          "options": ["Rice", "Ragi", "Wheat", "Maize"],
+          "answer": 1,
+          "hint": "We wrote three millet names on the board, one of them is here.",
+          "explain": "Ragi is a millet, like jowar and bajra. Rice, wheat and maize are other cereals.",
+          "why_wrong": {
+            "0": "Rice is a cereal grain, but not a millet.",
+            "2": "Wheat is a cereal grain, but not a millet.",
+            "3": "Maize or makka is a cereal, but not one of the millets."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "truefalse",
+          "prompt": "Millets need a lot of water to grow.",
+          "answer": false,
+          "hint": "Think about where bajra grows, in Rajasthan.",
+          "explain": "False. Millets need much less water than rice, so they grow well even in dry places."
+        }
+      ]
+    },
+    {
+      "id": "nutrients",
+      "title": "Nutrients and their jobs",
+      "beats": [
+        {
+          "board": "Carbohydrates + fats = ENERGY (rice, roti, ghee, oil)",
+          "teach": "Food has different nutrients, each with a job. Carbohydrates in rice, roti, potato and sugar, and fats in ghee, butter, oil and nuts give us energy to run, play and study. Fats give a lot of energy, so a little is enough."
+        },
+        {
+          "board": "Proteins = body building and repair (dal, paneer, egg)",
+          "teach": "Proteins build and repair our body, like bricks for a house. Children need them to grow. Dal, rajma, chana, paneer, milk, eggs, fish and soya are rich in proteins. When you get a cut and it heals, proteins are helping."
+        },
+        {
+          "board": "Vitamins + minerals = protect us. Fibre + water help digestion",
+          "teach": "Vitamins and minerals, found in fruits, vegetables, milk and so on, protect us from diseases and keep eyes, bones and teeth healthy. Dietary fibre, also called roughage, from whole grains, fruits, salad and vegetables, helps food move through the stomach and intestines and prevents constipation. And water is needed for almost every job in the body."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "Which food is rich in proteins?",
+          "options": ["Dal", "Sugar", "Ghee", "Rice"],
+          "answer": 0,
+          "hint": "Which one helps build and repair the body?",
+          "explain": "Dal is rich in proteins. Sugar and rice are mostly carbohydrates and ghee is mostly fat.",
+          "why_wrong": {
+            "1": "Sugar is a carbohydrate, it gives energy but does not build the body.",
+            "2": "Ghee is a fat, it gives energy.",
+            "3": "Rice is mostly carbohydrate, an energy food."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "fill",
+          "prompt": "Carbohydrates and fats mainly give us ____.",
+          "answer": ["energy"],
+          "choices": ["energy", "fibre", "vitamins"],
+          "hint": "What do you need to run and play?",
+          "explain": "Carbohydrates and fats are energy-giving foods."
+        }
+      ]
+    },
+    {
+      "id": "tests",
+      "title": "Testing food for nutrients",
+      "beats": [
+        {
+          "board": "Starch + iodine → blue-black colour",
+          "teach": "We can test food for nutrients with simple activities. Put a few drops of dilute iodine solution on a piece of potato or some cooked rice. If it turns blue-black, the food has starch, which is a carbohydrate. Teachers do this in the school lab, children should not taste iodine.",
+          "diagram": "iodine-test"
+        },
+        {
+          "board": "Fat → oily see-through patch on paper",
+          "teach": "To test for fat, rub a little of the food, like crushed groundnut or a bit of butter, on a piece of paper and hold it up to the light. If you see an oily patch that light passes through (a translucent patch), the food has fat."
+        },
+        {
+          "board": "Protein: copper sulphate + caustic soda → violet",
+          "teach": "For proteins, in the lab a little food paste is mixed with water, a few drops of copper sulphate solution and caustic soda solution. A violet colour means proteins are present. Boiled egg white or milk turns violet. Remind them these chemicals are only for the lab with a teacher."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "When iodine is added to a food with starch, the colour becomes:",
+          "options": ["Red", "Blue-black", "Yellow", "Green"],
+          "answer": 1,
+          "hint": "Look at the first line on the board.",
+          "explain": "Starch turns blue-black with iodine solution.",
+          "why_wrong": {
+            "2": "Iodine itself is yellowish brown. It changes to blue-black only when starch is present."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "truefalse",
+          "prompt": "An oily, see-through patch on paper shows that the food has fat.",
+          "answer": true,
+          "hint": "Think of a samosa kept on a newspaper.",
+          "explain": "True. Fat leaves a translucent oily patch on paper."
+        }
+      ]
+    },
+    {
+      "id": "balanced",
+      "title": "Balanced diet and deficiency diseases",
+      "beats": [
+        {
+          "board": "Balanced diet = all nutrients in the right amount + fibre + water",
+          "teach": "A balanced diet has all the nutrients in the right amounts, along with fibre and water. A simple Indian thali can be balanced: roti or rice for energy, dal for protein, sabzi and salad for vitamins, minerals and fibre, and curd. Too much of only one kind, like only sweets, is not balanced.",
+          "diagram": "food-plate"
+        },
+        {
+          "board": "Missing nutrients → deficiency diseases",
+          "teach": "If a nutrient is missing for a long time, we get deficiency diseases. Lack of vitamin C causes scurvy with bleeding gums, lack of vitamin D causes rickets with soft bent bones, lack of iodine causes goitre with a swollen neck, lack of iron causes anaemia making us weak and tired, and lack of vitamin A causes night blindness. Mention amla and lemon for vitamin C, sunlight for vitamin D, iodised salt for iodine, green leafy vegetables and jaggery for iron."
+        },
+        {
+          "board": "Mindful eating: eat slowly, listen to your hunger, less junk",
+          "teach": "Mindful eating means paying attention while eating: eat slowly, chew well, stop when you feel full, and notice what is on your plate. Junk food like chips, fried snacks and cold drinks has too much salt, sugar and fat and very few nutrients, so keep it for sometimes. And don't waste food."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "Lack of vitamin C in food causes:",
+          "options": ["Scurvy", "Rickets", "Goitre", "Anaemia"],
+          "answer": 0,
+          "hint": "This disease makes the gums bleed.",
+          "explain": "Lack of vitamin C causes scurvy. Amla, lemon and oranges are rich in vitamin C.",
+          "why_wrong": {
+            "1": "Rickets comes from lack of vitamin D.",
+            "2": "Goitre comes from lack of iodine.",
+            "3": "Anaemia comes from lack of iron."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "fill",
+          "prompt": "Lack of iodine in food causes ____.",
+          "answer": ["goitre", "goiter"],
+          "choices": ["goitre", "scurvy", "rickets"],
+          "hint": "It causes a swelling in the neck.",
+          "explain": "Lack of iodine causes goitre. That is why we use iodised salt."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    { "topic": "food diversity in india", "text": "Indian food varies by region because of differences in climate, soil, rainfall and crops. Rice is a staple in eastern and southern states like West Bengal, Odisha, Kerala and Tamil Nadu. Wheat is a staple in Punjab, Haryana and Uttar Pradesh. Millets like bajra (pearl millet), jowar (sorghum) and ragi (finger millet) are common in Rajasthan, Maharashtra and Karnataka. Coastal regions eat more fish and coconut." },
+    { "topic": "millets", "text": "Millets are small-seeded grains such as ragi, jowar, bajra, kodo and foxtail millet. They are rich in fibre, minerals like iron and calcium, and proteins. They need much less water than rice, can grow in poor soil and dry weather, and are climate friendly. The year 2023 was celebrated as the International Year of Millets; in India millets are called Shree Anna." },
+    { "topic": "nutrients", "text": "The main components of food are carbohydrates, fats, proteins, vitamins and minerals, plus dietary fibre and water. Carbohydrates (rice, wheat, potato, sugar) and fats (ghee, oil, butter, nuts) are energy-giving. Fats give more than twice the energy of the same amount of carbohydrates. Proteins (pulses, milk, paneer, eggs, meat, soybean) are body-building and help repair. Vitamins and minerals are protective and needed in small amounts." },
+    { "topic": "fibre and water", "text": "Dietary fibre or roughage does not give nutrients but helps the body get rid of undigested food and prevents constipation. It is found in whole grains, pulses, fruits and vegetables. Water helps the body absorb nutrients, removes wastes through urine and sweat, and controls body temperature." },
+    { "topic": "food tests", "text": "Starch test: add two to three drops of dilute iodine solution to the food; a blue-black colour shows starch. Fat test: rub the food on paper; a translucent oily patch shows fat. Protein test: mix a little food with water, add two drops of copper sulphate solution and ten drops of caustic soda solution; a violet colour shows protein. These tests are done in the lab under a teacher's supervision." },
+    { "topic": "balanced diet", "text": "A balanced diet provides all nutrients in the right amounts along with roughage and water. Needs depend on age, gender, activity and health. Growing children need more protein. Overeating fatty and sugary foods can cause obesity. Cooking methods matter too: overcooking and washing cut vegetables can destroy some vitamins." },
+    { "topic": "deficiency diseases", "text": "Deficiency diseases happen when a nutrient is missing from the diet over a long time. Vitamin A: night blindness, poor vision. Vitamin B1: beriberi, weak muscles. Vitamin C: scurvy, bleeding gums, slow healing. Vitamin D: rickets, soft and bent bones. Calcium: weak bones and teeth. Iodine: goitre, swollen neck glands. Iron: anaemia, tiredness. Protein lack in children can cause kwashiorkor and marasmus, with stunted growth." },
+    { "topic": "mindful eating and junk food", "text": "Mindful eating means eating with attention: noticing hunger and fullness, eating slowly, enjoying the food, and choosing nutritious items. Junk food and many packaged foods are high in salt, sugar and unhealthy fats and low in nutrients. Reading food labels helps us know what is inside packaged food." }
+  ]
+}

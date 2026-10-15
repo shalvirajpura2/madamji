@@ -1,0 +1,187 @@
+{
+  "id": "g10-electricity",
+  "grade": 10,
+  "order": 1,
+  "title": "Electricity",
+  "book": "NCERT Science Class 10, Chapter 11",
+  "tagline": "Why does the bulb glow, and why does the heater get hot?",
+  "icon": "bulb",
+  "keyterms": ["electric current", "charge", "coulomb", "ampere", "potential difference", "volt", "ammeter", "voltmeter", "Ohm's law", "resistance", "ohm", "resistivity", "series", "parallel", "Joule's law", "heating effect", "electric power", "watt", "kilowatt hour", "nichrome", "tungsten"],
+  "sections": [
+    {
+      "id": "current",
+      "title": "Current and potential difference",
+      "beats": [
+        {
+          "board": "Current I = Q / t  (unit: ampere, 1 A = 1 C/s)",
+          "teach": "Electric current is the rate of flow of charge: I equals Q by t. Unit is the ampere, 1 ampere is 1 coulomb of charge flowing per second. Current is measured with an ammeter connected in series. Conventional current flows from positive to negative terminal, opposite to the flow of electrons. Board exam tip: they love asking the definition with the unit."
+        },
+        {
+          "board": "Potential difference V = W / Q  (unit: volt)",
+          "teach": "Charges flow only when there is a potential difference, like water flows from a higher tank to a lower one. Potential difference is the work done to move a unit charge between two points: V equals W by Q, unit volt, where 1 volt is 1 joule per coulomb. A cell or battery maintains this potential difference. It is measured with a voltmeter connected in parallel across the component.",
+          "diagram": "simple-circuit"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "number",
+          "prompt": "A charge of 60 C flows through a wire in 2 minutes. What is the current in amperes?",
+          "answer": 0.5,
+          "unit": "A",
+          "tolerance": 0.02,
+          "hint": "Convert 2 minutes into seconds first, then use I equals Q by t.",
+          "explain": "2 minutes is 120 seconds, so I = 60 ÷ 120 = 0.5 A."
+        },
+        {
+          "id": "q2",
+          "type": "mcq",
+          "prompt": "How is a voltmeter connected in a circuit?",
+          "options": ["In series with the component", "In parallel across the component", "Directly across the cell only, never the component", "It does not need to be connected"],
+          "answer": 1,
+          "hint": "Ammeter goes in series. The voltmeter is the opposite.",
+          "explain": "A voltmeter is connected in parallel across the component to measure the potential difference across it.",
+          "why_wrong": {
+            "0": "That is how an ammeter is connected. A voltmeter goes in parallel."
+          }
+        }
+      ]
+    },
+    {
+      "id": "ohm",
+      "title": "Ohm's law and resistance",
+      "beats": [
+        {
+          "board": "Ohm's law: V ∝ I  →  V = IR  (R in ohm, Ω)",
+          "teach": "Ohm's law: at constant temperature, the potential difference across a conductor is directly proportional to the current through it, so V equals I R. R is the resistance, unit ohm. The V-I graph is a straight line through the origin. Resistance is how much a conductor opposes the flow of current.",
+          "diagram": "vi-graph"
+        },
+        {
+          "board": "R = ρ l / A : longer wire → more R, thicker wire → less R",
+          "teach": "Resistance depends on length, area of cross-section and material. R equals rho l by A. Double the length, resistance doubles. Double the area, resistance halves. Rho is resistivity, a property of the material. Resistance also changes with temperature. Use the analogy of a long narrow gali versus a wide short road for traffic."
+        },
+        {
+          "board": "Copper, aluminium: low ρ (wires). Nichrome: high ρ (heaters)",
+          "teach": "Metals like copper and aluminium have low resistivity, so they are used for connecting wires. Alloys like nichrome have high resistivity and do not oxidise or burn easily when hot, so they are used in heaters, irons and toasters. Insulators like glass and rubber have very high resistivity."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "number",
+          "prompt": "A bulb draws a current of 0.5 A from a 220 V supply. What is its resistance in ohm?",
+          "answer": 440,
+          "unit": "ohm",
+          "tolerance": 0.01,
+          "hint": "Use V equals I R, so R equals V by I.",
+          "explain": "R = V ÷ I = 220 ÷ 0.5 = 440 Ω."
+        },
+        {
+          "id": "q2",
+          "type": "mcq",
+          "prompt": "If the length of a wire is doubled (same material and thickness), its resistance:",
+          "options": ["Becomes half", "Doubles", "Stays the same", "Becomes four times"],
+          "answer": 1,
+          "hint": "R is directly proportional to length.",
+          "explain": "R = ρl/A, so R is directly proportional to length. Double the length, double the resistance.",
+          "why_wrong": {
+            "3": "Four times happens if you stretch a wire to double length, because its area also halves. Here only the length changes."
+          }
+        }
+      ]
+    },
+    {
+      "id": "combos",
+      "title": "Resistors in series and parallel",
+      "beats": [
+        {
+          "board": "Series: same current · Rs = R1 + R2 + R3",
+          "teach": "In series, resistors are joined end to end, so the same current flows through each, and the total voltage is shared. Total resistance is the sum: Rs equals R1 plus R2 plus R3. If one breaks, the whole circuit stops, like old serial decoration lights at Diwali.",
+          "diagram": "series-parallel"
+        },
+        {
+          "board": "Parallel: same voltage · 1/Rp = 1/R1 + 1/R2 + 1/R3",
+          "teach": "In parallel, each resistor is connected directly across the same two points, so each has the same potential difference and the current divides. One by Rp equals one by R1 plus one by R2 plus one by R3. The equivalent resistance is less than the smallest single resistor."
+        },
+        {
+          "board": "Homes use parallel: full 220 V to each, separate switches",
+          "teach": "Our houses are wired in parallel. Each appliance gets the full 220 volt, each can be switched on or off independently, and if the fan stops the tube light still works. In series the appliances would share the voltage and none would work properly."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "number",
+          "prompt": "Two resistors of 4 Ω and 6 Ω are connected in series. What is the total resistance in ohm?",
+          "answer": 10,
+          "unit": "ohm",
+          "tolerance": 0.01,
+          "hint": "In series, simply add them.",
+          "explain": "Rs = 4 + 6 = 10 Ω."
+        },
+        {
+          "id": "q2",
+          "type": "number",
+          "prompt": "Two resistors of 6 Ω each are connected in parallel. What is the equivalent resistance in ohm?",
+          "answer": 3,
+          "unit": "ohm",
+          "tolerance": 0.01,
+          "hint": "1/Rp = 1/6 + 1/6. Then flip it.",
+          "explain": "1/Rp = 1/6 + 1/6 = 2/6 = 1/3, so Rp = 3 Ω. Smaller than either resistor, as expected."
+        }
+      ]
+    },
+    {
+      "id": "heating",
+      "title": "Heating effect and electric power",
+      "beats": [
+        {
+          "board": "Joule's law: H = I²Rt  (heater, iron, toaster, fuse)",
+          "teach": "When current flows through a resistor, electrical energy turns into heat. Joule's law of heating: H equals I square R t. Heat depends on the square of current, the resistance and the time. Useful in electric irons, heaters, toasters, geysers and the fuse. Bulb filaments are made of tungsten because its melting point is very high, about 3380 degree Celsius."
+        },
+        {
+          "board": "Power P = VI = I²R = V²/R  (unit: watt)",
+          "teach": "Electric power is the rate at which electrical energy is used. P equals V I, which can also be written I square R or V square by R. Unit is the watt. A 1000 watt iron uses energy faster than a 60 watt bulb. Board tip: choose the formula that matches the quantities given."
+        },
+        {
+          "board": "Electricity bill: 1 unit = 1 kWh = 3.6 × 10⁶ J",
+          "teach": "We pay for energy, not power. Energy equals power into time. The commercial unit is the kilowatt hour, which is one 'unit' on the electricity bill. 1 kilowatt hour equals 3.6 into 10 to the power 6 joules. A 1000 watt heater running for one hour uses 1 unit."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "number",
+          "prompt": "An electric iron rated 1000 W is used for 2 hours. How many units (kWh) of energy does it use?",
+          "answer": 2,
+          "unit": "kWh",
+          "tolerance": 0.01,
+          "hint": "Convert 1000 W into kilowatt, then multiply by hours.",
+          "explain": "1000 W = 1 kW, and 1 kW × 2 h = 2 kWh, that is 2 units."
+        },
+        {
+          "id": "q2",
+          "type": "mcq",
+          "prompt": "Bulb filaments are made of tungsten mainly because tungsten has:",
+          "options": ["A very high melting point", "Very low resistance", "A low cost", "Magnetic properties"],
+          "answer": 0,
+          "hint": "The filament gets white hot. What must it not do?",
+          "explain": "Tungsten has a very high melting point, so it can glow white hot without melting.",
+          "why_wrong": {
+            "1": "A filament needs fairly high resistance to heat up and glow, so low resistance is not the reason."
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    { "topic": "electric current and charge", "text": "Electric current is the rate of flow of electric charge, I = Q/t. The SI unit of charge is the coulomb (C); one coulomb is the charge of about 6 × 10^18 electrons. The SI unit of current is the ampere (A); 1 A = 1 C/s. Small currents are measured in milliampere (1 mA = 10^-3 A) or microampere. Current is measured by an ammeter connected in series. Conventional current is opposite to the direction of electron flow." },
+    { "topic": "potential difference", "text": "Electric potential difference between two points is the work done to move a unit charge from one point to the other, V = W/Q. Its SI unit is the volt (V); 1 V = 1 J/C. It is measured with a voltmeter connected in parallel. A cell's chemical action creates the potential difference that drives current." },
+    { "topic": "circuit diagram symbols", "text": "Common symbols: cell (long and short line), battery (several cells), plug key or switch, wire joint, resistor (rectangle or zigzag), variable resistor or rheostat, ammeter (A in a circle), voltmeter (V in a circle), bulb. An open key means no current; a closed key completes the circuit." },
+    { "topic": "ohm's law", "text": "Ohm's law states that the potential difference across the ends of a metallic wire is directly proportional to the current through it, provided temperature remains the same. V = IR. The V-I graph is a straight line passing through the origin; its slope gives resistance. 1 ohm is the resistance of a conductor through which 1 A flows when 1 V is applied. A rheostat changes resistance in a circuit." },
+    { "topic": "factors affecting resistance and resistivity", "text": "Resistance R = ρ l / A, where l is length, A is area of cross-section and ρ (rho) is resistivity, measured in ohm metre. Resistivity depends only on the material and temperature. Metals and alloys have low resistivity (silver and copper lowest); insulators like rubber and glass have very high resistivity. Alloys like nichrome have higher resistivity than pure metals and do not oxidise at high temperatures, so they are used in heating devices." },
+    { "topic": "series and parallel", "text": "In series: same current through every resistor, voltage divides, Rs = R1 + R2 + R3, the equivalent resistance is larger than any single resistor, and a break anywhere stops current everywhere. In parallel: same voltage across each, current divides, 1/Rp = 1/R1 + 1/R2 + 1/R3, equivalent resistance is less than the smallest, and each branch works independently. Household circuits use parallel connections." },
+    { "topic": "heating effect", "text": "Joule's law of heating: H = I^2 R t. The heat produced is proportional to the square of the current, the resistance and the time. Applications: electric iron, toaster, oven, kettle, heater, bulb filament (tungsten, melting point 3380 °C, bulbs filled with nitrogen or argon), and the fuse, a wire of low melting point that melts and breaks the circuit when current is too high." },
+    { "topic": "electric power and energy", "text": "Electric power P = VI = I^2 R = V^2 / R. The SI unit is the watt (W); 1 W = 1 V × 1 A. 1 kilowatt = 1000 W. Electrical energy = power × time. The commercial unit is the kilowatt hour (kWh), also called a unit; 1 kWh = 3.6 × 10^6 J. Example: a 100 W bulb used for 10 hours uses 1 kWh." }
+  ]
+}

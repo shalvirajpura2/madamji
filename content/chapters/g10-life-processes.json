@@ -1,0 +1,187 @@
+{
+  "id": "g10-life-processes",
+  "grade": 10,
+  "order": 3,
+  "title": "Life Processes: Nutrition and Respiration",
+  "book": "NCERT Science Class 10, Chapter 5",
+  "tagline": "What is your body doing every second, even when you sleep?",
+  "icon": "leaf",
+  "keyterms": ["life processes", "nutrition", "autotrophic", "heterotrophic", "photosynthesis", "chlorophyll", "stomata", "guard cells", "alimentary canal", "salivary amylase", "pepsin", "hydrochloric acid", "bile", "pancreatic juice", "villi", "respiration", "aerobic", "anaerobic", "pyruvate", "ATP", "mitochondria", "lactic acid", "alveoli"],
+  "sections": [
+    {
+      "id": "what",
+      "title": "What are life processes?",
+      "beats": [
+        {
+          "board": "Maintenance needs energy, even while sleeping",
+          "teach": "How do we know something is alive? Visible movement is one sign, but even when we are asleep our body is busy: repairing cells, keeping the heart beating, digesting food. These maintenance jobs go on all the time and need energy. The processes that together keep living things alive are life processes."
+        },
+        {
+          "board": "Life processes: nutrition · respiration · transport · excretion",
+          "teach": "The main life processes: nutrition, taking in food as the source of energy and raw materials; respiration, breaking down food to release energy; transport, carrying food and oxygen to every cell; and excretion, removing harmful wastes. Today we focus on nutrition and respiration. Big multicellular organisms need special organs for each job because diffusion alone is too slow for them."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "Which of these is NOT a life process?",
+          "options": ["Nutrition", "Respiration", "Excretion", "Evaporation"],
+          "answer": 3,
+          "hint": "Which one happens to water in a puddle, not inside a living body?",
+          "explain": "Evaporation is a physical process. Nutrition, respiration and excretion are life processes.",
+          "why_wrong": {
+            "2": "Excretion, removing wastes, is a life process."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "truefalse",
+          "prompt": "Life processes stop when we are sleeping.",
+          "answer": false,
+          "hint": "Does your heart stop at night?",
+          "explain": "False. Maintenance processes like breathing, heartbeat and repair continue even during sleep."
+        }
+      ]
+    },
+    {
+      "id": "photosynthesis",
+      "title": "Nutrition in plants: photosynthesis",
+      "beats": [
+        {
+          "board": "6CO₂ + 12H₂O → C₆H₁₂O₆ + 6O₂ + 6H₂O  (sunlight, chlorophyll)",
+          "teach": "Plants are autotrophs: they make their own food. In photosynthesis, they take in carbon dioxide and water, and in the presence of sunlight and chlorophyll make glucose, giving out oxygen. Say the balanced equation in words clearly; it is asked in board exams. The glucose is stored as starch, which is why a leaf kept in sunlight gives a positive iodine test.",
+          "diagram": "photosynthesis"
+        },
+        {
+          "board": "Steps: light absorbed → water split (H + O) → CO₂ reduced to sugar",
+          "teach": "Three events: first, chlorophyll absorbs light energy; second, light energy is converted to chemical energy and water molecules are split into hydrogen and oxygen; third, carbon dioxide is reduced to carbohydrates. These need not happen one after another immediately; desert plants take in CO2 at night and use it in the day."
+        },
+        {
+          "board": "Stomata: tiny pores for gas exchange, opened/closed by guard cells",
+          "teach": "Leaves have tiny pores called stomata, mostly on the lower surface, through which carbon dioxide enters and oxygen leaves. Guard cells swell when water flows into them, opening the pore, and shrink to close it, which also controls water loss. Mention that a lot of water also escapes through stomata."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "The raw materials for photosynthesis are:",
+          "options": ["Oxygen and glucose", "Carbon dioxide and water", "Starch and water", "Nitrogen and carbon dioxide"],
+          "answer": 1,
+          "hint": "Look at the left side of the equation on the board.",
+          "explain": "Plants use carbon dioxide and water, with sunlight and chlorophyll, to make glucose.",
+          "why_wrong": {
+            "0": "Oxygen and glucose are the products, not the raw materials."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "fill",
+          "prompt": "Tiny pores on leaves through which gases are exchanged are called ____.",
+          "answer": ["stomata", "stoma"],
+          "choices": ["stomata", "villi", "alveoli"],
+          "hint": "They are opened and closed by guard cells.",
+          "explain": "Stomata are the tiny pores on leaves for gas exchange."
+        }
+      ]
+    },
+    {
+      "id": "digestion",
+      "title": "Nutrition in human beings",
+      "beats": [
+        {
+          "board": "Mouth: teeth chew · saliva's amylase: starch → sugar",
+          "teach": "Humans are heterotrophs: we depend on food made by others. Food passes through the alimentary canal, a long tube from mouth to anus. In the mouth, teeth break food into small pieces and saliva, which has the enzyme salivary amylase, starts breaking starch into sugar. Try chewing a roti for a long time, it starts tasting sweet!",
+          "diagram": "digestive-system"
+        },
+        {
+          "board": "Stomach: HCl (acidic, kills germs) · pepsin (proteins) · mucus (protects)",
+          "teach": "Muscles of the oesophagus push food to the stomach by peristalsis. Gastric glands release hydrochloric acid, which makes the medium acidic and kills germs, the enzyme pepsin which digests proteins, and mucus which protects the stomach lining from the acid. Excess acid causes acidity, which is why people take antacids."
+        },
+        {
+          "board": "Small intestine: bile + pancreatic juice · villi absorb digested food",
+          "teach": "The small intestine is the longest part, where digestion completes. Bile from the liver makes the medium alkaline and breaks fats into small droplets, called emulsification. Pancreatic juice has trypsin for proteins and lipase for fats. The inner wall has finger-like villi which greatly increase the surface area for absorbing digested food into the blood. The large intestine absorbs extra water."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "Which enzyme in saliva breaks down starch?",
+          "options": ["Pepsin", "Salivary amylase", "Trypsin", "Lipase"],
+          "answer": 1,
+          "hint": "It works in the mouth, and that is why a roti starts tasting sweet.",
+          "explain": "Salivary amylase in saliva breaks starch into sugar.",
+          "why_wrong": {
+            "0": "Pepsin works in the stomach on proteins.",
+            "2": "Trypsin is in pancreatic juice and digests proteins.",
+            "3": "Lipase digests fats."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "short",
+          "prompt": "What is the role of villi in the small intestine?",
+          "keywords": [["absorb", "absorption", "surface area", "soak"]],
+          "sample": "Villi increase the surface area of the small intestine for absorbing digested food into the blood.",
+          "hint": "They are finger-like. What does that do to the surface area?",
+          "explain": "Villi greatly increase the surface area for absorption of digested food."
+        }
+      ]
+    },
+    {
+      "id": "respiration",
+      "title": "Respiration",
+      "beats": [
+        {
+          "board": "Glucose → pyruvate (in cytoplasm) → energy stored as ATP",
+          "teach": "Respiration releases energy from food. First, in the cytoplasm, glucose, a six-carbon molecule, is broken into pyruvate, a three-carbon molecule. What happens next depends on oxygen. The energy released is stored in ATP, the energy currency of the cell, which the cell spends for all its work like muscle contraction."
+        },
+        {
+          "board": "Aerobic (O₂, mitochondria): CO₂ + H₂O + lots of energy · Anaerobic: less energy",
+          "teach": "With oxygen, in the mitochondria, pyruvate is broken down completely into carbon dioxide and water, releasing a lot of energy. That is aerobic respiration. Without oxygen, yeast converts pyruvate into ethanol and carbon dioxide, which is fermentation, used to make idli and dosa batter rise. In our muscles during heavy exercise, when oxygen runs short, pyruvate becomes lactic acid, causing cramps.",
+          "diagram": "respiration-pathways"
+        },
+        {
+          "board": "Breathing: nostrils → trachea → bronchi → alveoli (huge surface area)",
+          "teach": "In humans, air enters through the nostrils, where hairs and mucus filter it, then the trachea, bronchi, bronchioles and finally tiny balloon-like alveoli in the lungs. Alveoli give a huge surface area and are surrounded by blood vessels for gas exchange. Haemoglobin in red blood cells carries oxygen to the cells. Mention that if all alveoli were spread out they would cover about 80 square metres."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "During heavy exercise, when muscles lack oxygen, pyruvate is converted into:",
+          "options": ["Ethanol and carbon dioxide", "Lactic acid", "Carbon dioxide and water", "Glucose"],
+          "answer": 1,
+          "hint": "This causes muscle cramps.",
+          "explain": "In muscles short of oxygen, pyruvate becomes lactic acid, which causes cramps.",
+          "why_wrong": {
+            "0": "Ethanol and carbon dioxide are made by yeast, not our muscles.",
+            "2": "That is aerobic respiration, which needs enough oxygen."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "fill",
+          "prompt": "The energy currency of the cell is ____.",
+          "answer": ["ATP", "a t p", "adenosine triphosphate"],
+          "choices": ["ATP", "DNA", "glucose"],
+          "hint": "Three capital letters on the first board line.",
+          "explain": "ATP, adenosine triphosphate, stores and supplies energy for cell activities."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    { "topic": "life processes", "text": "Life processes are the processes that together perform the maintenance job in living organisms: nutrition, respiration, transportation and excretion. Maintenance is needed even when organisms are not doing anything visible, such as sleeping. Energy comes from food, an outside source, mostly carbon-based. In multicellular organisms, specialised tissues and organs perform these functions because diffusion is not enough for all cells." },
+    { "topic": "autotrophic nutrition and photosynthesis", "text": "Autotrophs like green plants make food from simple inorganic substances. Photosynthesis: 6CO2 + 12H2O → C6H12O6 + 6O2 + 6H2O in the presence of sunlight and chlorophyll. Events: absorption of light by chlorophyll; conversion of light energy to chemical energy and splitting of water into hydrogen and oxygen; reduction of carbon dioxide to carbohydrates. Carbohydrates are stored as starch. Chloroplasts contain chlorophyll. Desert plants take up CO2 at night and store it as an intermediate. Experiments show chlorophyll, light and CO2 are all needed (variegated leaf and potassium hydroxide experiments)." },
+    { "topic": "stomata", "text": "Stomata are tiny pores, mostly on the underside of leaves, used for exchange of gases (CO2 in, O2 out) and lose a lot of water as vapour. Each pore is surrounded by two guard cells; when they absorb water they swell and the pore opens, when they lose water they shrink and the pore closes. Plants close stomata when CO2 is not needed or to save water." },
+    { "topic": "heterotrophic nutrition", "text": "Heterotrophs depend on food made by others. Types include holozoic nutrition (taking in whole food and digesting it inside, as in humans and amoeba), saprophytic nutrition (fungi breaking down food outside the body), and parasitic nutrition (cuscuta, ticks, lice, tapeworms). Amoeba takes food using pseudopodia and forms a food vacuole; paramecium uses cilia." },
+    { "topic": "human digestion", "text": "Alimentary canal: mouth, oesophagus, stomach, small intestine, large intestine, anus. In the mouth, salivary amylase breaks starch into sugar. Peristalsis moves food along. In the stomach, gastric glands release hydrochloric acid (acidic medium, kills bacteria), pepsin (protein digestion) and mucus (protects the inner lining). A sphincter muscle controls food passing into the small intestine. In the small intestine, bile from the liver makes the medium alkaline and emulsifies fats; pancreatic juice contains trypsin (proteins) and lipase (fats); intestinal glands complete digestion into glucose, amino acids, fatty acids and glycerol. Villi increase the surface area for absorption and are rich in blood vessels. The large intestine absorbs excess water; waste leaves through the anus. Herbivores have longer small intestines to digest cellulose." },
+    { "topic": "respiration pathways", "text": "Glucose (6-carbon) is broken into pyruvate (3-carbon) in the cytoplasm. In the absence of oxygen in yeast, pyruvate becomes ethanol and carbon dioxide (fermentation). In muscle cells during lack of oxygen, pyruvate becomes lactic acid, causing cramps. In the presence of oxygen in mitochondria, pyruvate breaks down into carbon dioxide and water, releasing much more energy (aerobic respiration). Energy is stored as ATP (adenosine triphosphate), the energy currency of the cell." },
+    { "topic": "human respiratory system", "text": "Air enters through the nostrils, where fine hairs and mucus filter it, passes through the pharynx, the trachea (held open by rings of cartilage), bronchi and bronchioles, ending in alveoli, balloon-like structures with a large surface area surrounded by blood capillaries. Breathing in happens when ribs lift and the diaphragm flattens, enlarging the chest cavity. Haemoglobin in red blood cells has a high affinity for oxygen and carries it to tissues; carbon dioxide is mostly carried dissolved in blood. The alveolar surface, if spread out, would be about 80 square metres." },
+    { "topic": "aquatic and plant respiration", "text": "Aquatic organisms take dissolved oxygen from water through gills, breathing faster because dissolved oxygen is low. Plants exchange gases through stomata and lenticels in stems, by diffusion. At night plants only respire, giving out CO2; during the day, photosynthesis uses CO2 and releases O2 faster than respiration uses it." }
+  ]
+}
