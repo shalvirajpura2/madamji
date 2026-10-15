@@ -55,7 +55,7 @@ export function ClassroomView(p: ClassroomViewProps) {
               <li
                 key={s.id}
                 title={s.title}
-                className={`flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-extrabold transition ${
+                className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-extrabold transition sm:h-8 sm:min-w-8 sm:px-2 sm:text-sm ${
                   current ? "bg-marigold text-ink ring-4 ring-marigold/30" : finished ? "bg-leaf text-white" : "bg-line text-ink-soft"
                 }`}
               >
@@ -122,20 +122,23 @@ export function ClassroomView(p: ClassroomViewProps) {
           )}
         </div>
 
-        <aside className="flex flex-col gap-3 lg:order-none">
-          <div className="paper-card flex items-end gap-3 rounded-3xl p-4 lg:flex-col lg:items-center">
+        <aside className="order-first flex flex-col gap-3 lg:order-none">
+          <div className="paper-card flex items-center gap-3 rounded-3xl p-3 lg:flex-col lg:items-center lg:p-4">
             <Teacher
               pose={p.teacher.pose}
               mood={p.teacher.mood}
               level={p.teacher.level}
-              className="h-36 w-28 shrink-0 lg:h-64 lg:w-52"
+              className="h-24 w-20 shrink-0 lg:h-64 lg:w-52"
             />
             <div className="min-w-0 flex-1 lg:w-full lg:text-center">
               <p className="text-lg font-extrabold">Meera Ma&apos;am</p>
-              <p className="text-sm text-ink-soft">Science teacher</p>
+              <p className="hidden text-sm text-ink-soft lg:block">Science teacher</p>
+              <p className="line-clamp-3 text-[15px] leading-snug font-medium lg:hidden" aria-hidden>
+                {p.captions.teacher || "…"}
+              </p>
             </div>
           </div>
-          <div className="paper-card flex min-h-28 flex-col gap-2 rounded-3xl p-4" aria-live="polite">
+          <div className="paper-card hidden min-h-28 flex-col gap-2 rounded-3xl p-4 lg:flex" aria-live="polite">
             <p className="text-xs font-bold tracking-wide text-ink-soft uppercase">Ma&apos;am is saying</p>
             <p className="line-clamp-5 text-[15px] leading-snug font-medium">{p.captions.teacher || "…"}</p>
             {p.captions.student && (
