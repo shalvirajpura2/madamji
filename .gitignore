@@ -28,3 +28,6 @@ __pycache__/
 # agent runtime
 agent/logs/
 agent/kms/
+
+# web local store
+web/.data/
