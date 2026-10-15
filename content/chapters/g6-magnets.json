@@ -1,0 +1,188 @@
+{
+  "id": "g6-magnets",
+  "grade": 6,
+  "order": 1,
+  "title": "Exploring Magnets",
+  "book": "NCERT Curiosity, Chapter 4",
+  "tagline": "Why does a magnet grab a pin but ignore a paper clip made of plastic?",
+  "icon": "magnet",
+  "keyterms": ["magnet", "magnetic", "non-magnetic", "lodestone", "pole", "north pole", "south pole", "compass", "attract", "repel", "iron filings"],
+  "sections": [
+    {
+      "id": "materials",
+      "title": "What does a magnet pull?",
+      "beats": [
+        {
+          "board": "Magnet attracts: iron, nickel, cobalt",
+          "teach": "Open with a quick imagine-this: you drop a box of pins on the floor, how do you pick them up fast? A magnet! A magnet pulls (attracts) some things. Things made of iron, nickel and cobalt are pulled. These are called magnetic materials. Everyday examples: iron nails, pins, steel spoons (steel has iron in it), fridge door."
+        },
+        {
+          "board": "Not attracted: plastic, wood, paper, rubber, copper, aluminium",
+          "teach": "Things that a magnet does not pull are non-magnetic: plastic, wood, paper, rubber, glass, cloth. Important twist: not all metals are magnetic! Copper wire, an aluminium utensil, a gold ring are not pulled. Ask the student to guess before telling: will a magnet pull a one rupee coin made of steel? (yes, steel coins are attracted)."
+        },
+        {
+          "board": "Lodestone = natural magnet. Today's magnets are man-made",
+          "teach": "Tell the story: long ago a shepherd named Magnes noticed the iron tip of his stick and the nails of his shoes sticking to a black rock. That rock was lodestone, a natural magnet. The magnets we use today are made by people and come in many shapes: bar magnet, U-shaped (horseshoe), ring magnet, button magnets in pencil boxes and fridge magnets.",
+          "diagram": "magnet-shapes"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "Which of these will a magnet pull?",
+          "options": ["Plastic scale", "Iron nail", "Wooden pencil", "Rubber eraser"],
+          "answer": 1,
+          "hint": "Think of the three magnetic materials we just wrote on the board.",
+          "explain": "An iron nail is made of iron, a magnetic material. Plastic, wood and rubber are non-magnetic.",
+          "why_wrong": {
+            "0": "Plastic is non-magnetic, so a magnet will not pull a plastic scale.",
+            "2": "A pencil is wood and graphite, both non-magnetic.",
+            "3": "Rubber is non-magnetic."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "truefalse",
+          "prompt": "All metals are attracted by a magnet.",
+          "answer": false,
+          "hint": "Remember the copper wire and the aluminium vessel.",
+          "explain": "False. Only some metals like iron, nickel and cobalt are magnetic. Copper, aluminium, gold and silver are not attracted."
+        }
+      ]
+    },
+    {
+      "id": "poles",
+      "title": "Poles of a magnet",
+      "beats": [
+        {
+          "board": "Iron filings stick most at the two ends = POLES",
+          "teach": "Describe the classic activity: spread iron filings on paper and roll a bar magnet in them. Most filings cling to the two ends, very few in the middle. The ends, where the pull is strongest, are called the poles of the magnet.",
+          "diagram": "bar-magnet-filings"
+        },
+        {
+          "board": "Every magnet has 2 poles: North (N) and South (S)",
+          "teach": "Every magnet has two poles, a north pole and a south pole. On most bar magnets they are marked N and S or painted in different colours. A magnet always has both, you can never find a magnet with only one pole."
+        },
+        {
+          "board": "Break a magnet → each piece still has N and S",
+          "teach": "Fun puzzle: if we break a bar magnet into two pieces, do we get one north piece and one south piece? No! Each piece becomes a complete small magnet with its own north and south pole. Let the student guess first, then reveal."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "fill",
+          "prompt": "The ends of a magnet, where its pull is strongest, are called ____.",
+          "answer": ["poles", "pole", "magnetic poles"],
+          "choices": ["poles", "edges", "centres"],
+          "hint": "Where did most of the iron filings stick?",
+          "explain": "The two ends of a magnet where the attraction is strongest are called its poles."
+        },
+        {
+          "id": "q2",
+          "type": "mcq",
+          "prompt": "A bar magnet is broken into two pieces. Each piece will have:",
+          "options": ["Only a north pole", "Only a south pole", "Both a north and a south pole", "No poles at all"],
+          "answer": 2,
+          "hint": "Can a magnet ever have just one pole?",
+          "explain": "Each broken piece becomes a complete magnet with both a north and a south pole.",
+          "why_wrong": {
+            "0": "A magnet can never have only one pole, even after breaking.",
+            "1": "A magnet can never have only one pole, even after breaking.",
+            "3": "The pieces are still magnets, so they still have poles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "directions",
+      "title": "Finding directions with a magnet",
+      "beats": [
+        {
+          "board": "Hang a bar magnet freely → it rests North–South",
+          "teach": "Tie a thread to the middle of a bar magnet and let it hang freely. Wait till it stops swinging. It always comes to rest in the north-south direction. Turn it gently and let go, it comes back to north-south again. The end that points north is the north-seeking pole, that is why we call it the north pole."
+        },
+        {
+          "board": "Compass = a tiny magnet needle that points North",
+          "teach": "A compass has a small magnetized needle that can turn freely. It always settles pointing north and south, so it shows us directions. Sailors, mountain climbers and soldiers use it. Even our mobile phones have a tiny magnetic sensor for the map app.",
+          "diagram": "compass"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "mcq",
+          "prompt": "A freely hanging bar magnet always comes to rest pointing:",
+          "options": ["East–West", "North–South", "Up–Down", "Any direction"],
+          "answer": 1,
+          "hint": "Which direction does a compass needle show?",
+          "explain": "A freely suspended magnet always rests in the north-south direction.",
+          "why_wrong": {
+            "0": "East-west is a common mix-up. A free magnet settles north-south.",
+            "3": "It is not random, it always comes back to north-south."
+          }
+        },
+        {
+          "id": "q2",
+          "type": "fill",
+          "prompt": "The needle of a compass is actually a small ____.",
+          "answer": ["magnet", "magnetic needle", "bar magnet"],
+          "choices": ["magnet", "wire", "battery"],
+          "hint": "What makes it point north on its own?",
+          "explain": "The compass needle is a tiny magnet, that is why it points north-south."
+        }
+      ]
+    },
+    {
+      "id": "attract-repel",
+      "title": "Attraction and repulsion",
+      "beats": [
+        {
+          "board": "Unlike poles (N–S) attract. Like poles (N–N, S–S) repel",
+          "teach": "Bring two bar magnets close. North near south: they pull together, they attract. North near north, or south near south: they push away, they repel. Short rule: like poles repel, unlike poles attract. Mention the fun toy where magnets float over each other because of repulsion.",
+          "diagram": "attract-repel"
+        },
+        {
+          "board": "Sure test of a magnet = REPULSION",
+          "teach": "Puzzle: you have two iron bars, one is a magnet and one is not. How to find out? Attraction is not enough, because a magnet attracts plain iron too. But only a magnet can repel another magnet. So repulsion is the sure test."
+        },
+        {
+          "board": "Magnets get weak if heated, hammered or dropped. Store in pairs",
+          "teach": "Taking care of magnets: heating, hammering or dropping them makes them lose their magnetism. Keep them away from phones, TVs and cards. Store bar magnets in pairs, with opposite poles side by side and a wooden piece in between and soft iron pieces called keepers across the ends."
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "type": "truefalse",
+          "prompt": "Two north poles attract each other.",
+          "answer": false,
+          "hint": "Like poles, unlike poles, which one pushes away?",
+          "explain": "False. Like poles repel. Two north poles push each other away."
+        },
+        {
+          "id": "q2",
+          "type": "mcq",
+          "prompt": "What is the sure test to check if an iron rod is a magnet?",
+          "options": ["It attracts iron pins", "It repels one end of a known magnet", "It is shiny", "It is heavy"],
+          "answer": 1,
+          "hint": "Plain iron can also be attracted, but can plain iron push a magnet away?",
+          "explain": "Only a magnet can repel another magnet, so repulsion is the sure test.",
+          "why_wrong": {
+            "0": "Good thinking, but this is a trap. Even plain iron gets attracted to a magnet, so attraction alone does not prove it is a magnet."
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    { "topic": "magnetic materials", "text": "Materials attracted by a magnet are magnetic materials: iron, nickel, cobalt and alloys like steel. Materials not attracted are non-magnetic: plastic, wood, paper, rubber, glass, cloth, and metals such as copper, aluminium, brass, gold and silver. Stainless steel used in kitchens is often only weakly magnetic or not magnetic, depending on its type." },
+    { "topic": "lodestone and history", "text": "Lodestone is a naturally occurring magnetic rock (magnetite). A popular story says a shepherd named Magnes found iron nails in his shoes sticking to such a rock. Ancient sailors used lodestone to find direction. Modern magnets are artificial and made in many shapes: bar, horseshoe or U-shaped, ring, cylindrical, button and disc magnets." },
+    { "topic": "poles", "text": "The ends of a magnet where attraction is strongest are its poles. Every magnet has two poles, north and south. Poles always exist in pairs; breaking a magnet gives smaller magnets each with both poles. Iron filings collect mostly at the poles and very little near the middle." },
+    { "topic": "directions and compass", "text": "A freely suspended bar magnet comes to rest along the north-south direction. The end pointing north is the north-seeking or north pole. A compass is a small magnetized needle pivoted so it can rotate freely, with a dial marked with directions. The Earth itself behaves like a giant magnet, which is why compasses work. Phones use a magnetometer sensor." },
+    { "topic": "attraction and repulsion", "text": "Unlike poles attract each other and like poles repel each other. Repulsion is the sure test of a magnet because attraction can also happen between a magnet and plain iron. Magnetic forces work from a distance and even through paper, wood or water." },
+    { "topic": "making and caring for magnets", "text": "A simple magnet can be made by stroking an iron nail or needle many times in one direction with one pole of a bar magnet. Magnets lose their magnetism when heated, hammered or dropped repeatedly. Store bar magnets in pairs with unlike poles on the same side, separated by wood, with soft iron keepers across the ends. Keep magnets away from mobile phones, computers, televisions, and cards with magnetic strips." },
+    { "topic": "uses of magnets", "text": "Magnets are used in fridge door seals, pencil boxes, speakers and earphones, electric motors in fans and toys, cranes in scrap yards that lift iron, MRI machines in hospitals, and maglev trains that float using magnetic repulsion." }
+  ]
+}
