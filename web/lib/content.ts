@@ -1,7 +1,12 @@
 // server-side only: the raw json holds answers and teacher notes, so pages pass
 // the slim public version below to client components
 
+import g10Electricity from "@content/chapters/g10-electricity.json";
+import g10LifeProcesses from "@content/chapters/g10-life-processes.json";
+import g10MagneticEffects from "@content/chapters/g10-magnetic-effects.json";
+import g6Food from "@content/chapters/g6-food.json";
 import g6Magnets from "@content/chapters/g6-magnets.json";
+import g6Water from "@content/chapters/g6-water.json";
 
 export type Beat = { board: string; diagram?: string };
 
@@ -32,7 +37,7 @@ type RawChapter = Omit<Chapter, "sections"> & {
   sections: { id: string; title: string; beats: Beat[]; questions: RawQuestion[] }[];
 };
 
-const raw = [g6Magnets] as unknown as RawChapter[];
+const raw = [g6Magnets, g6Food, g6Water, g10Electricity, g10MagneticEffects, g10LifeProcesses] as unknown as RawChapter[];
 
 function toPublic(c: RawChapter): Chapter {
   return {

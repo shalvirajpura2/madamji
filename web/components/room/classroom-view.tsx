@@ -82,7 +82,7 @@ export function ClassroomView(p: ClassroomViewProps) {
           <div className={`relative ${question ? "flex-none" : "min-h-[340px] flex-1"}`}>
             <Board chapter={chapter} lesson={lesson} compact={Boolean(question)} />
             {lesson?.paused && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center rounded-sm bg-ink/50 backdrop-blur-[2px]">
+              <div className="absolute inset-0 z-30 flex items-center justify-center rounded-sm bg-ink/55">
                 <div className="paper-card rounded-3xl px-8 py-6 text-center animate-pop">
                   <p className="text-4xl">☕</p>
                   <p className="text-2xl font-extrabold">Short break</p>
