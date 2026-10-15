@@ -31,3 +31,4 @@ agent/kms/
 
 # web local store
 web/.data/
+agent/content/

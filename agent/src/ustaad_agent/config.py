@@ -4,19 +4,29 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[3]
-load_dotenv(ROOT / "agent" / ".env.local")
-load_dotenv(ROOT / "agent" / ".env")
+AGENT_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(AGENT_DIR / ".env.local")
+load_dotenv(AGENT_DIR / ".env")
 
 
 def _env(name: str, default: str = "") -> str:
     return os.environ.get(name, default).strip()
 
 
+def _content_dir() -> Path:
+    # repo checkout: ../content; docker image: content copied next to the agent
+    if _env("CONTENT_DIR"):
+        return Path(_env("CONTENT_DIR"))
+    for candidate in (AGENT_DIR.parent / "content", AGENT_DIR / "content"):
+        if (candidate / "chapters").is_dir():
+            return candidate
+    return AGENT_DIR.parent / "content"
+
+
 @dataclass(frozen=True)
 class Settings:
     agent_name: str = _env("AGENT_NAME", "ustaad-teacher")
-    content_dir: Path = Path(_env("CONTENT_DIR") or ROOT / "content")
+    content_dir: Path = _content_dir()
 
     llm_model: str = _env("LLM_MODEL", "gemini-3.5-flash")
     side_model: str = _env("SIDE_MODEL", "gemini-3.5-flash-lite")
