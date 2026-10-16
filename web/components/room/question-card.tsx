@@ -36,7 +36,10 @@ export function QuestionCard({ question, state, pending, onAnswer }: Props) {
           ? question.choices ?? []
           : [];
 
-  function optionTone(option: string) {
+  function optionTone(option: string, index: number) {
+    if (!done && question.type === "mcq" && state.eliminated?.includes(index)) {
+      return "border-line bg-paper-deep/40 text-ink-soft/50 line-through opacity-50";
+    }
     const isPicked = state.picked && same(state.picked, option);
     const isAnswer = state.answer && same(state.answer, option);
     if (done && isAnswer) return "border-leaf bg-leaf/15 text-leaf";
@@ -65,9 +68,9 @@ export function QuestionCard({ question, state, pending, onAnswer }: Props) {
           {options.map((option, i) => (
             <button
               key={option}
-              disabled={locked}
+              disabled={locked || (question.type === "mcq" && state.eliminated?.includes(i))}
               onClick={() => onAnswer({ choice: i })}
-              className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-lg font-semibold transition disabled:cursor-default ${optionTone(option)}`}
+              className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-lg font-semibold transition disabled:cursor-default ${optionTone(option, i)}`}
             >
               {question.type === "mcq" && (
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-paper-deep text-base font-extrabold">
@@ -111,7 +114,13 @@ export function QuestionCard({ question, state, pending, onAnswer }: Props) {
 
       {!done && (
         <p className="mt-3 text-sm font-medium text-ink-soft">
-          {pending ? "Checking…" : state.status === "retry" ? "Not quite. Try once more, you can do it!" : "Say your answer out loud, or tap it."}
+          {pending
+            ? "Checking…"
+            : state.status === "retry"
+              ? "Not quite yet. Listen to Ma'am's hint and try again, you can do it!"
+              : (state.hints ?? 0) > 0
+                ? "Use the hint and give it a try!"
+                : "Say your answer out loud, or tap it."}
         </p>
       )}
     </div>

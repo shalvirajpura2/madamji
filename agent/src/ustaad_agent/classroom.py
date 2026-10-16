@@ -10,8 +10,9 @@ import logging
 from livekit.agents import AgentSession, JobContext, RunContext
 from livekit.agents.voice import SpeechHandle
 
-from . import backend, grading, notes, prompts
+from . import backend, grading, language, notes, prompts
 from .content import Question
+from .language import ENGLISH
 from .lesson import CHECK, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
 from .models import ask_json
 from .prompts import Student
@@ -32,6 +33,7 @@ class Classroom:
         self.student = student
         self.tts = tts
         self.monitor = Monitor({"id": student.id, "name": student.name}, lesson.chapter.id)
+        self.language = ENGLISH  # until the student shows otherwise
         self.teacher = Teacher(self, self._instructions())
         self.mood = "calm"
         self._steps: dict[str, Step] = {}
@@ -65,7 +67,17 @@ class Classroom:
         await self.run(self.lesson.start(from_section))
 
     def _instructions(self) -> str:
-        return prompts.persona() + "\n\n" + prompts.classroom(self.lesson, self.student)
+        return prompts.persona() + "\n\n" + prompts.classroom(self.lesson, self.student, self.language)
+
+    def note_language(self, text: str) -> bool:
+        """Switch the class language when the student switches. Returns True if it changed.
+        The next instructions refresh carries it into the system prompt too."""
+        found = language.detect(text)
+        if found is None or found == self.language:
+            return False
+        logger.info("class language: %s -> %s", self.language, found)
+        self.language = found
+        return True
 
     async def _refresh(self) -> None:
         await self.teacher.update_instructions(self._instructions())
@@ -140,7 +152,7 @@ class Classroom:
             self.mood = "curious"
         elif step.kind == "feedback" and verdict == grading.CORRECT:
             pace, self.mood = 1.04, "happy"
-        elif step.kind == "feedback" and step.retry:
+        elif step.kind in ("hint", "unclear") or (step.kind == "feedback" and step.retry):
             self.mood = "encouraging"
         elif step.kind == "feedback":
             self.mood = "kind"
@@ -257,17 +269,15 @@ class Classroom:
         if phase == CHECK:
             await self.run(self.lesson.proceed(), lead="The student stayed quiet, so take it as no doubts. ")
         elif phase == QUESTION:
+            # never answer for them: encourage first, then a stronger hint each silence, then just wait
             if self._quiet_count == 1:
                 self._say(
                     "The student has been quiet on the question. Gently encourage them in one sentence: take your "
                     "time, think aloud, or ask for a hint. Do not give the answer.",
                     mood="encouraging",
                 )
-            elif self._quiet_count == 2:
-                q = self.lesson.current.questions[self.lesson.qi]
-                self._say(f"Still quiet. Give this small hint in one or two sentences: {q.hint}", mood="encouraging")
-            else:
-                await self.run(self.lesson.proceed(), lead="The student did not answer for a long time. ")
+            elif self._quiet_count <= 4:
+                await self.run(self.lesson.hint())
         elif phase in (INTRO, TEACH, FEEDBACK):
             await self.run(self.lesson.proceed(), lead="The student is quiet after your reply, so carry on with the class. ")
 
@@ -331,7 +341,7 @@ class Classroom:
         await self._interrupt()
         self.lesson.mark_interrupted()
         self._say(
-            "The student raised their hand. Stop and invite them in a few words, like 'Haan, bolo beta?'",
+            "The student raised their hand. Stop and invite them in a few words, like 'Yes, tell me?' (or 'Haan, bolo beta?' in Hinglish)",
             mood="listening",
         )
         await self.publish()
@@ -341,8 +351,9 @@ class Classroom:
         await self._interrupt()
         self.lesson.mark_interrupted()
         self.lesson.paused = True
-        self._say("The student pressed pause. Say okay in one short line, like 'Theek hai, chhota sa break. "
-                  "Jab ready ho, resume dabana.'", mood="calm")
+        self._say("The student pressed pause. Say okay in one short line, like 'Okay, a short break. Press resume when you are ready.' "
+                  "(In Hinglish: 'Theek hai, chhota sa break. "
+                  "Jab ready ho, resume dabana.')", mood="calm")
         await self._refresh()
         return "ok"
 
@@ -374,7 +385,7 @@ class Classroom:
             bits.append(f"got {correct} of {attempted} questions right")
         missed = []
         for r in self.lesson.results:
-            if r.verdict == grading.CORRECT:
+            if r.attempts <= 1:
                 continue
             section = next(s for s in ch.sections if s.id == r.section)
             q = next(q for q in section.questions if q.id == r.question)

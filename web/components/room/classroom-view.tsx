@@ -4,6 +4,7 @@ import { Teacher, type TeacherPose } from "@/components/teacher";
 import type { Chapter } from "@/lib/content";
 import type { LessonState, Mood } from "@/lib/lesson";
 import { Board } from "./board";
+import { Captions } from "./captions";
 import { Controls, StatusPill, type StatusTone } from "./controls";
 import { QuestionCard } from "./question-card";
 
@@ -133,14 +134,12 @@ export function ClassroomView(p: ClassroomViewProps) {
             <div className="min-w-0 flex-1 lg:w-full lg:text-center">
               <p className="text-lg font-extrabold">Meera Ma&apos;am</p>
               <p className="hidden text-sm text-ink-soft lg:block">Science teacher</p>
-              <p className="line-clamp-3 text-[15px] leading-snug font-medium lg:hidden" aria-hidden>
-                {p.captions.teacher || "…"}
-              </p>
+              <Captions text={p.captions.teacher} className="max-h-[4.6rem] text-[15px] leading-snug font-medium lg:hidden" />
             </div>
           </div>
           <div className="paper-card hidden min-h-28 flex-col gap-2 rounded-3xl p-4 lg:flex" aria-live="polite">
             <p className="text-xs font-bold tracking-wide text-ink-soft uppercase">Ma&apos;am is saying</p>
-            <p className="line-clamp-5 text-[15px] leading-snug font-medium">{p.captions.teacher || "…"}</p>
+            <Captions text={p.captions.teacher} className="max-h-40 text-[15px] leading-snug font-medium" />
             {p.captions.student && (
               <p className="mt-auto line-clamp-2 border-t-2 border-dashed border-line pt-2 text-sm text-ink-soft">
                 <span className="font-bold text-leaf">You: </span>

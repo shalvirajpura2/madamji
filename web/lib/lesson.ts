@@ -20,6 +20,8 @@ export type QuestionState = {
   picked: string;
   answer: string | null;
   explain: string | null;
+  eliminated?: number[];
+  hints?: number;
 };
 
 export type LessonState = {

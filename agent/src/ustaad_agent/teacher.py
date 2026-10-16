@@ -1,9 +1,10 @@
 from collections.abc import AsyncIterable
 from typing import TYPE_CHECKING, Literal
 
-from livekit.agents import Agent, ModelSettings, RunContext, function_tool
+from livekit.agents import Agent, ModelSettings, RunContext, function_tool, llm
 
 from . import speech
+from .language import STYLE
 
 if TYPE_CHECKING:
     from .classroom import Classroom
@@ -14,6 +15,18 @@ class Teacher(Agent):
         super().__init__(instructions=instructions)
         self.classroom = classroom
 
+    def llm_node(self, chat_ctx: llm.ChatContext, tools, model_settings: ModelSettings):
+        # runs for spoken and typed turns alike: follow the student's latest language from this reply on
+        last_user = next((m for m in reversed(chat_ctx.items) if getattr(m, "role", None) == "user"), None)
+        if last_user is not None:
+            self.classroom.note_language(last_user.text_content or "")
+        chat_ctx = chat_ctx.copy()
+        chat_ctx.add_message(
+            role="system",
+            content=f"Class language right now: {self.classroom.language}. {STYLE[self.classroom.language]}",
+        )
+        return Agent.default.llm_node(self, chat_ctx, tools, model_settings)
+
     def tts_node(self, text: AsyncIterable[str], model_settings: ModelSettings):
         return Agent.default.tts_node(self, speech.voice_stream(text), model_settings)
 
@@ -23,8 +36,9 @@ class Teacher(Agent):
     @function_tool()
     async def continue_lesson(self, context: RunContext) -> str:
         """Move the class forward. Call when the student is ready to go on (says ok, no doubt,
-        samajh gaya, chalo, aage), wants to skip the current question, or right after you bring
-        them back from an off-topic chat."""
+        samajh gaya, chalo, aage), or right after you bring them back from an off-topic chat.
+        While a practice question is open it never skips it: it returns a stronger hint to share
+        when the student is stuck, asks for help, or asks you to skip or tell the answer."""
         return await self.classroom.tool_continue(context)
 
     @function_tool()

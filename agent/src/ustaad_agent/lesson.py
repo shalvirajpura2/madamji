@@ -7,13 +7,15 @@ INTRO, TEACH, CHECK, QUESTION, FEEDBACK, WRAP, DONE = (
     "intro", "teach", "check", "question", "feedback", "wrap", "done",
 )
 
+MAX_HINT = 3
+
 
 @dataclass
 class Step:
     """One thing the teacher should say next. `auto_next` means the engine moves on by itself
     once she finishes saying it; otherwise the class waits for the student."""
 
-    kind: str  # intro | beat | resume | check | question | feedback | unclear | wrap
+    kind: str  # intro | beat | resume | check | question | feedback | hint | unclear | wrap
     auto_next: bool
     section: int
     beat: int = -1
@@ -22,7 +24,7 @@ class Step:
     attempt: int = 0
     retry: bool = False
     new_section: bool = False
-    skipped: bool = False
+    hint_level: int = 0
 
 
 @dataclass
@@ -35,12 +37,17 @@ class Result:
 
 @dataclass
 class Lesson:
+    """Practice questions are never answered for the student: a wrong answer, "skip" or silence
+    only earns a stronger hint, and the class moves on once the student gets it right."""
+
     chapter: Chapter
     section: int = 0
     beat: int = -1
     phase: str = INTRO
     qi: int = 0
     attempts: int = 0
+    hints: int = 0
+    eliminated: list[int] = field(default_factory=list)
     interrupted: bool = False
     paused: bool = False
     sections_done: int = 0
@@ -79,7 +86,8 @@ class Lesson:
         return None
 
     def proceed(self) -> Step | None:
-        """The student is ready to move on (said so, or stayed quiet)."""
+        """The student is ready to move on (said so, or stayed quiet). On a question that
+        means a stronger hint, never the answer."""
         self.paused = False
         if self.phase == TEACH and self.interrupted:
             self.interrupted = False
@@ -90,12 +98,14 @@ class Lesson:
         if self.phase == CHECK:
             return self._question(0)
         if self.phase == QUESTION:
-            q = self.current.questions[self.qi]
-            self._record(grading.DONT_KNOW)
-            self.phase = FEEDBACK
-            return Step("feedback", auto_next=True, section=self.section, question=self.qi,
-                        grade=grading.Grade(grading.DONT_KNOW, note=q.explain), skipped=True)
+            return self.hint()
         return None
+
+    def hint(self) -> Step | None:
+        if self.phase != QUESTION:
+            return None
+        self._raise_hint()
+        return Step("hint", auto_next=False, section=self.section, question=self.qi, hint_level=self.hints)
 
     def answer(
         self, text: str | None = None, choice: int | None = None, result: grading.Grade | None = None
@@ -108,13 +118,16 @@ class Lesson:
         if result.verdict == grading.UNCLEAR:
             return Step("unclear", auto_next=False, section=self.section, question=self.qi, grade=result)
         self.attempts += 1
-        if result.verdict == grading.CORRECT or self.attempts >= 2:
+        if result.verdict == grading.CORRECT:
             self._record(result.verdict)
             self.phase = FEEDBACK
             return Step("feedback", auto_next=True, section=self.section, question=self.qi,
                         grade=result, attempt=self.attempts)
+        if q.type == "mcq" and result.picked in q.options:
+            self._eliminate(q.options.index(result.picked))
+        self._raise_hint()
         return Step("feedback", auto_next=False, section=self.section, question=self.qi,
-                    grade=result, attempt=self.attempts, retry=True)
+                    grade=result, attempt=self.attempts, retry=True, hint_level=self.hints)
 
     def jump(self, section: int) -> Step | None:
         if not 0 <= section < len(self.chapter.sections):
@@ -127,6 +140,22 @@ class Lesson:
     def mark_interrupted(self) -> None:
         if self.phase in (INTRO, TEACH):
             self.interrupted = True
+
+    def _raise_hint(self) -> None:
+        self.hints = min(self.hints + 1, MAX_HINT)
+        q = self.current.questions[self.qi]
+        if q.type != "mcq":
+            return
+        # level 2 rules out one more wrong option, level 3 leaves only two to choose from
+        keep_wrong = {1: 3, 2: 2, 3: 1}[self.hints]
+        wrong = [i for i in range(len(q.options)) if i != int(q.answer) and i not in self.eliminated]
+        while len(wrong) > keep_wrong:
+            self._eliminate(wrong.pop(0))
+
+    def _eliminate(self, index: int) -> None:
+        q = self.current.questions[self.qi]
+        if index != int(q.answer) and index not in self.eliminated:
+            self.eliminated.append(index)
 
     def _beat(self, index: int, new_section: bool = False) -> Step:
         self.phase = TEACH
@@ -143,6 +172,8 @@ class Lesson:
         self.phase = QUESTION
         self.qi = index
         self.attempts = 0
+        self.hints = 0
+        self.eliminated = []
         self.last_grade = None
         return Step("question", auto_next=False, section=self.section, question=index)
 
@@ -165,33 +196,29 @@ class Lesson:
         return self.phase == WRAP
 
     def score(self) -> tuple[int, int]:
-        correct = sum(1 for r in self.results if r.verdict == grading.CORRECT)
-        return correct, len(self.results)
+        """First-try correct answers out of questions finished."""
+        first_try = sum(1 for r in self.results if r.attempts <= 1)
+        return first_try, len(self.results)
 
     def snapshot(self) -> dict:
         correct, attempted = self.score()
-        q = self.question
         question = None
-        if q is not None or self.phase == QUESTION:
-            q = q or self.current.questions[self.qi]
-            resolved = self.phase == FEEDBACK
-            status = "open"
-            if self.last_grade is not None:
-                v = self.last_grade.verdict
-                if v == grading.CORRECT:
-                    status = "correct"
-                elif resolved:
-                    status = "revealed"
-                elif v != grading.UNCLEAR:
-                    status = "retry"
+        if self.phase in (QUESTION, FEEDBACK):
+            q = self.current.questions[self.qi]
+            solved = self.phase == FEEDBACK
+            status = "correct" if solved else "open"
+            if not solved and self.last_grade is not None and self.last_grade.verdict != grading.UNCLEAR:
+                status = "retry"
             question = {
                 "id": q.id,
                 "index": self.qi,
                 "count": len(self.current.questions),
                 "status": status,
                 "picked": self.last_grade.picked if self.last_grade else "",
-                "answer": q.answer_text() if resolved else None,
-                "explain": q.explain if resolved else None,
+                "answer": q.answer_text() if solved else None,
+                "explain": q.explain if solved else None,
+                "eliminated": list(self.eliminated),
+                "hints": self.hints,
             }
         return {
             "v": 1,
