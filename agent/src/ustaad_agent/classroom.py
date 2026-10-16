@@ -46,15 +46,19 @@ class Classroom:
 
     async def start(self) -> None:
         lp = self.ctx.room.local_participant
-        lp.register_rpc_method("answer", self._rpc_answer)
-        lp.register_rpc_method("raise_hand", self._rpc_raise_hand)
-        lp.register_rpc_method("pause", self._rpc_pause)
-        lp.register_rpc_method("resume", self._rpc_resume)
-        lp.register_rpc_method("continue", self._rpc_continue)
+        for name, handler in {
+            "answer": self._rpc_answer,
+            "raise_hand": self._rpc_raise_hand,
+            "pause": self._rpc_pause,
+            "resume": self._rpc_resume,
+            "continue": self._rpc_continue,
+        }.items():
+            lp.register_rpc_method(name, self._guarded(handler))
 
         self.session.on("user_state_changed", self._on_user_state)
         self.session.on("user_input_transcribed", self._on_transcript)
         self.session.on("error", self._on_error)
+        self.session.on("close", self._on_close)
         self.ctx.add_shutdown_callback(self._shutdown)
 
         from_section = self.student.sections_done if not self.student.completed else 0
@@ -282,7 +286,34 @@ class Classroom:
         if not recoverable:
             asyncio.create_task(self.publish(status="trouble"))
 
+    def _on_close(self, ev) -> None:
+        if ev.error is None or self._closing:
+            return
+        # the voice pipeline gave up; tell the screen, save progress, and leave the room
+        logger.error("class ended by an error: %s", ev.error)
+        self._closing = True
+        self._save()
+
+        async def end() -> None:
+            await self.publish(status="ended")
+            await asyncio.sleep(1.5)
+            self.ctx.shutdown(reason="voice pipeline error")
+
+        asyncio.create_task(end())
+
     # ---- taps from the student's screen ----
+
+    def _guarded(self, handler):
+        async def run(data) -> str:
+            if self._closing:
+                return json.dumps({"ok": False, "reason": "class ended"})
+            try:
+                return await handler(data)
+            except RuntimeError as e:  # session already closing
+                logger.warning("rpc %s ignored: %s", data.method, e)
+                return json.dumps({"ok": False})
+
+        return run
 
     async def _rpc_answer(self, data) -> str:
         payload = json.loads(data.payload or "{}")

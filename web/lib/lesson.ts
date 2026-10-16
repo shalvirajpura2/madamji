@@ -34,7 +34,7 @@ export type LessonState = {
   score: { correct: number; attempted: number };
   paused: boolean;
   mood: Mood;
-  status: "ok" | "trouble";
+  status: "ok" | "trouble" | "ended";
 };
 
 export function parseLesson(raw: string | undefined): LessonState | null {

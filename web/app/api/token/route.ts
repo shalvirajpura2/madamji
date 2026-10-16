@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   const body = (await req.json().catch(() => ({}))) as Body;
   let request: ClassRequest = {};
-  try {
+  try {  
     request = JSON.parse(body.room_config?.agents?.[0]?.metadata || "{}");
   } catch {
     return bad("Bad class request.");

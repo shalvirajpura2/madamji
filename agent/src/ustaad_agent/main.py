@@ -6,7 +6,6 @@ from livekit.agents import (
     AgentSession,
     JobContext,
     JobProcess,
-    STTContextOptions,
     TurnHandlingOptions,
     cli,
     room_io,
@@ -18,7 +17,7 @@ from . import content
 from .classroom import NORMAL_TURN, Classroom
 from .config import settings
 from .lesson import Lesson
-from .models import make_llm
+from .models import teacher_llm
 from .prompts import Student
 
 logger = logging.getLogger("ustaad")
@@ -72,8 +71,13 @@ async def classroom_session(ctx: JobContext) -> None:
     )
     session = AgentSession(
         vad=ctx.proc.userdata["vad"],
-        stt=sarvam.STT(model=settings.stt_model, mode=settings.stt_mode, language="unknown"),
-        llm=make_llm(settings.llm_model),
+        stt=sarvam.STT(
+            model=settings.stt_model,
+            mode=settings.stt_mode,
+            language="unknown",
+            prompt=f"A science class on {chapter.title}. Terms: {', '.join(chapter.keyterms)}.",
+        ),
+        llm=teacher_llm(),
         tts=tts,
         turn_handling=TurnHandlingOptions(
             turn_detection=MultilingualModel(),
@@ -86,7 +90,6 @@ async def classroom_session(ctx: JobContext) -> None:
             },
             preemptive_generation={"enabled": True},
         ),
-        stt_context_options=STTContextOptions(keyterms=chapter.keyterms + ["Ustaad", "Meera Ma'am"]),
         user_away_timeout=8.0,
         max_tool_steps=3,
     )

@@ -29,6 +29,7 @@ class Settings:
     content_dir: Path = _content_dir()
 
     llm_model: str = _env("LLM_MODEL", "openai/gpt-4.1-mini")
+    llm_fallback: str = _env("LLM_FALLBACK", "google/gemini-2.5-flash")
     side_model: str = _env("SIDE_MODEL", "openai/gpt-4.1-mini")
 
     stt_model: str = _env("STT_MODEL", "saaras:v4")

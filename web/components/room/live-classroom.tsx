@@ -94,11 +94,13 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
     micOn: isMicrophoneEnabled,
     phase: lesson?.phase,
     paused: Boolean(lesson?.paused),
-    trouble: lesson?.status === "trouble",
+    trouble: lesson?.status === "trouble" || lesson?.status === "ended",
   });
 
   let banner = actionError;
-  if (agent.state === "failed") {
+  if (lesson?.status === "ended") {
+    banner = "Ma'am had a technical problem and had to stop the class. Your progress is saved. Leave and enter the class again to continue.";
+  } else if (agent.state === "failed") {
     banner = "Ma'am couldn't join the class. The teacher service may be starting up, please leave and try again in a minute.";
   } else if (status.tone === "connecting" && session.connectionState === ConnectionState.Reconnecting) {
     banner = "Your internet dropped for a moment. Reconnecting…";

@@ -19,6 +19,14 @@ def make_llm(model: str) -> llm.LLM:
     return google.LLM(model=model, temperature=0.8, thinking_config={"thinking_level": "minimal"})
 
 
+def teacher_llm() -> llm.LLM:
+    """Primary model with an automatic switch to a backup if it errors or stalls."""
+    models = [m for m in (settings.llm_model, settings.llm_fallback) if m]
+    if len(models) == 1:
+        return make_llm(models[0])
+    return llm.FallbackAdapter([make_llm(m) for m in models], attempt_timeout=6.0)
+
+
 _side: llm.LLM | None = None
 
 
