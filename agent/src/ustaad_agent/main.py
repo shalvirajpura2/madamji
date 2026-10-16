@@ -11,13 +11,14 @@ from livekit.agents import (
     cli,
     room_io,
 )
-from livekit.plugins import google, noise_cancellation, sarvam, silero
+from livekit.plugins import noise_cancellation, sarvam, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 from . import content
 from .classroom import NORMAL_TURN, Classroom
 from .config import settings
 from .lesson import Lesson
+from .models import make_llm
 from .prompts import Student
 
 logger = logging.getLogger("ustaad")
@@ -72,11 +73,7 @@ async def classroom_session(ctx: JobContext) -> None:
     session = AgentSession(
         vad=ctx.proc.userdata["vad"],
         stt=sarvam.STT(model=settings.stt_model, mode=settings.stt_mode, language="unknown"),
-        llm=google.LLM(
-            model=settings.llm_model,
-            temperature=0.8,
-            thinking_config={"thinking_level": "minimal"},
-        ),
+        llm=make_llm(settings.llm_model),
         tts=tts,
         turn_handling=TurnHandlingOptions(
             turn_detection=MultilingualModel(),

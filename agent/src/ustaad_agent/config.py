@@ -28,8 +28,8 @@ class Settings:
     agent_name: str = _env("AGENT_NAME", "ustaad-teacher")
     content_dir: Path = _content_dir()
 
-    llm_model: str = _env("LLM_MODEL", "gemini-3.5-flash")
-    side_model: str = _env("SIDE_MODEL", "gemini-3.5-flash-lite")
+    llm_model: str = _env("LLM_MODEL", "openai/gpt-4.1-mini")
+    side_model: str = _env("SIDE_MODEL", "openai/gpt-4.1-mini")
 
     stt_model: str = _env("STT_MODEL", "saaras:v4")
     stt_mode: str = _env("STT_MODE", "translit")

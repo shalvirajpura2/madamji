@@ -7,15 +7,13 @@ import asyncio
 import json
 import logging
 
-from google import genai
-from google.genai import types
 from livekit.agents import AgentSession, JobContext, RunContext
 from livekit.agents.voice import SpeechHandle
 
 from . import backend, grading, notes, prompts
-from .config import settings
 from .content import Question
 from .lesson import CHECK, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
+from .models import ask_json
 from .prompts import Student
 from .safety import Monitor
 from .teacher import Teacher
@@ -43,7 +41,6 @@ class Classroom:
         self._saved_sections = lesson.sections_done
         self._advance: asyncio.Task | None = None
         self._closing = False
-        self._judge: genai.Client | None = None
 
     # ---- setup ----
 
@@ -189,25 +186,8 @@ class Classroom:
             "Judge the science, not the grammar or language (Hinglish is fine). "
             'Reply as JSON: {"verdict": "correct" | "partial" | "wrong"}'
         )
-        try:
-            self._judge = self._judge or genai.Client()
-            res = await asyncio.wait_for(
-                self._judge.aio.models.generate_content(
-                    model=settings.side_model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0,
-                        thinking_config=types.ThinkingConfig(thinking_level="minimal"),
-                    ),
-                ),
-                timeout=3,
-            )
-            verdict = json.loads(res.text or "{}").get("verdict")
-            return verdict if verdict in (grading.CORRECT, grading.PARTIAL, grading.WRONG) else None
-        except Exception as e:
-            logger.warning("answer judge failed: %s", e)
-            return None
+        verdict = ((await ask_json(prompt, timeout=3)) or {}).get("verdict")
+        return verdict if verdict in (grading.CORRECT, grading.PARTIAL, grading.WRONG) else None
 
     # ---- tools (called by the teacher LLM) ----
 

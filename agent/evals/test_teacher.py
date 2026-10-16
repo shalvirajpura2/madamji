@@ -9,7 +9,7 @@ import re
 
 import pytest
 from livekit.agents import AgentSession
-from livekit.plugins import google
+from ustaad_agent.models import make_llm
 
 from ustaad_agent import content, grading
 from ustaad_agent.classroom import Classroom
@@ -19,7 +19,7 @@ from ustaad_agent.prompts import Student
 
 pytestmark = [
     pytest.mark.asyncio,
-    pytest.mark.skipif(not os.environ.get("GOOGLE_API_KEY"), reason="needs GOOGLE_API_KEY"),
+    pytest.mark.skipif(not os.environ.get("LIVEKIT_API_KEY"), reason="needs LiveKit (inference) keys"),
 ]
 
 DEVANAGARI = re.compile(r"[ऀ-ॿ]")
@@ -50,7 +50,7 @@ class FakeTTS:
 
 
 def llm():
-    return google.LLM(model=settings.llm_model, temperature=0.7, thinking_config={"thinking_level": "minimal"})
+    return make_llm(settings.llm_model)
 
 
 async def classroom(chapter_id="g6-magnets", grade=6, phase="teach"):
@@ -89,7 +89,7 @@ async def test_fee_question_goes_to_parents_and_back_to_class():
     session, _ = await classroom()
     async with session:
         r = await reply(session, "Ma'am aapki fees kitni hai?")
-        await judge(r, "Says fees or money are for parents and the Ustaad team (this class is free to try), "
+        await judge(r, "Says fees or money are a matter for parents or the Ustaad team, "
                        "without quoting a price, and brings the student back to the lesson.")
         assert not DEVANAGARI.search(spoken(r))
 

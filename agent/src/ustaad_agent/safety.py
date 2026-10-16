@@ -7,11 +7,9 @@ import logging
 import re
 import time
 
-from google import genai
-from google.genai import types
-
 from . import backend
 from .config import settings
+from .models import ask_json
 
 logger = logging.getLogger("ustaad.safety")
 
@@ -38,7 +36,6 @@ class Monitor:
         self.student = student
         self.chapter_id = chapter_id
         self.last_alert = 0.0
-        self._client: genai.Client | None = None
 
     def raise_alert(self, severity: str, category: str, summary: str, quote: str = "", source: str = "teacher") -> None:
         self.last_alert = time.monotonic()
@@ -61,20 +58,9 @@ class Monitor:
     async def check(self, text: str) -> None:
         if not settings.safety_classifier or not WORRY.search(text):
             return
-        try:
-            self._client = self._client or genai.Client()
-            res = await self._client.aio.models.generate_content(
-                model=settings.side_model,
-                contents=PROMPT + json.dumps(text),
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0,
-                    thinking_config=types.ThinkingConfig(thinking_level="minimal"),
-                ),
-            )
-            verdict = json.loads(res.text or "{}")
-        except Exception as e:
-            logger.warning("safety check failed, logging as medium: %s", e)
+        verdict = await ask_json(PROMPT + json.dumps(text))
+        if verdict is None:
+            # worrying words and no second opinion: better a false alarm than a missed child
             verdict = {"flag": "medium", "category": "unchecked", "summary": "Worrying words, classifier unavailable."}
         if verdict.get("flag") in ("medium", "high") and time.monotonic() - self.last_alert > 60:
             self.raise_alert(verdict["flag"], verdict.get("category", ""), verdict.get("summary", ""),

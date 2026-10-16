@@ -27,7 +27,8 @@ GRADE_STYLE = {
     ),
     10: (
         "This student is in class 10, about 15 years old and preparing for the board exam. Use the correct NCERT "
-        "terms, formulas and units, and ask 'why' to push their reasoning. Where it is true, point out what is "
+        "terms, formulas and units, and ask 'why' to push their reasoning. When they ask what something is, start "
+        "with the NCERT definition including its formula and SI unit, then make it simple with an example. Where it is true, point out what is "
         "often asked in the board exam. Still warm, but brisk and to the point, like a favourite senior-school teacher."
     ),
 }

@@ -1,0 +1,47 @@
+"""Model wiring. A model name with a provider prefix ("openai/gpt-4.1-mini", "google/gemini-3.5-flash")
+goes through LiveKit Inference on the LiveKit key; a bare Gemini name uses the Gemini API directly."""
+
+import asyncio
+import json
+import logging
+
+from livekit.agents import inference, llm
+from livekit.plugins import google
+
+from .config import settings
+
+logger = logging.getLogger("ustaad.models")
+
+
+def make_llm(model: str) -> llm.LLM:
+    if "/" in model:
+        return inference.LLM(model=model)
+    return google.LLM(model=model, temperature=0.8, thinking_config={"thinking_level": "minimal"})
+
+
+_side: llm.LLM | None = None
+
+
+async def ask_json(prompt: str, timeout: float = 4.0) -> dict | None:
+    """One short background question to the side model, answered as JSON."""
+    global _side
+    _side = _side or make_llm(settings.side_model)
+    ctx = llm.ChatContext()
+    ctx.add_message(role="system", content="Reply with a single JSON object and nothing else.")
+    ctx.add_message(role="user", content=prompt)
+
+    async def run() -> str:
+        text = ""
+        async with _side.chat(chat_ctx=ctx) as stream:
+            async for chunk in stream:
+                if chunk.delta and chunk.delta.content:
+                    text += chunk.delta.content
+        return text
+
+    try:
+        text = await asyncio.wait_for(run(), timeout=timeout)
+        start, end = text.find("{"), text.rfind("}")
+        return json.loads(text[start : end + 1]) if start >= 0 else None
+    except Exception as e:
+        logger.warning("side model failed: %s", e)
+        return None
