@@ -14,7 +14,7 @@ from livekit.agents.voice import SpeechHandle
 from . import backend, drawing, grading, language, notes, prompts
 from .content import Question
 from .language import ENGLISH
-from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step, is_filler
+from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
 from .config import settings
 from .models import ask_json
 from .transcript import Transcript
@@ -68,6 +68,7 @@ class Classroom:
         self.drawing: dict | None = None  # what Ma'am drew on the board for a doubt
         self._drawings = 0
         self._last_user_seen = ""
+        self.turn_place: str | None = None  # where the latest student turn belongs, see notes.place
 
     # ---- setup ----
 
@@ -274,8 +275,12 @@ class Classroom:
         if message_id == self._last_user_seen:
             return
         self._last_user_seen = message_id
-        if self.lesson.phase in (TEACH, CHECK) and not is_filler(text):
-            self.lesson.note_live_doubt()
+        self.turn_place = None
+        if self.lesson.phase in (TEACH, CHECK):
+            self.turn_place = notes.place(text, self.lesson.chapter.id, self.lesson.section)
+            # doubts about the board right now are always answered, so only other parts use up the limit
+            if self.turn_place == notes.CHAPTER:
+                self.lesson.note_live_doubt()
 
     @property
     def is_paused(self) -> bool:
@@ -284,7 +289,7 @@ class Classroom:
     def should_park(self) -> bool:
         from .lesson import LIVE_DOUBTS_PER_PART
 
-        if self.lesson.phase not in (TEACH, CHECK):
+        if self.lesson.phase not in (TEACH, CHECK) or self.turn_place != notes.CHAPTER:
             return False
         return self.lesson.live_doubts > LIVE_DOUBTS_PER_PART or self.lesson.out_of_time
 
@@ -308,11 +313,15 @@ class Classroom:
         return await self._tool_step(ctx, step)
 
     async def tool_park(self, doubt: str) -> str:
-        if is_filler(doubt):
+        where = notes.place(doubt, self.lesson.chapter.id, self.lesson.section)
+        if where == notes.FILLER:
             return "That is not a doubt, so it was not added. Do not mention the doubt list; just carry on with continue_lesson."
-        if not notes.related(doubt, self.lesson.chapter.id):
-            return ("That is not about this chapter, so it was not added to the doubt list. Gently bring the student "
-                    "back to the lesson in one line and carry on with continue_lesson.")
+        if where == notes.OTHER:
+            return ("That is not about this chapter, so it was not added to the doubt list. Acknowledge what they "
+                    "asked kindly in one line, bring them back to the board, and carry on with continue_lesson.")
+        if where == notes.CURRENT and not self.lesson.out_of_time:
+            return ("This doubt is about what you are teaching right now, so it was not parked. Answer it now, "
+                    "briefly: first acknowledge exactly what they asked, explain, then tie it back to the board.")
         number = self.lesson.park(doubt)
         if self.lesson.live_doubts > 0:
             self.lesson.live_doubts -= 1  # parked, not answered live
@@ -320,8 +329,9 @@ class Classroom:
         if number is None:
             return ("The doubt list is full. Kindly say you will take this one in the next class, or answer it in "
                     "one line if it is tiny, then carry on.")
-        return (f"Added as doubt number {number} on the list on the screen. In one warm line, tell the student it is "
-                "on the doubt list and you will answer it before the class ends, then call continue_lesson.")
+        return (f"Added as doubt number {number} on the list on the screen. In one warm line, acknowledge exactly what "
+                "they asked (name the topic, like 'copper and magnets, good one'), say it is on the doubt list and "
+                "you will answer it before the class ends, then call continue_lesson.")
 
     async def tool_draw(self, what: str, diagram_id: str = "", template: str = "", options: str = "") -> str:
         self._drawings += 1

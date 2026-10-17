@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Literal
 
 from livekit.agents import Agent, ModelSettings, RunContext, function_tool, llm
 
-from . import speech
+from . import notes, speech
 from .language import STYLE
 
 if TYPE_CHECKING:
@@ -30,14 +30,26 @@ class Teacher(Agent):
             self.classroom.note_student_turn(last_user.id, last_user.text_content or "")
         chat_ctx = chat_ctx.copy()
         note = f"Class language right now: {self.classroom.language}. {STYLE[self.classroom.language]}"
-        if self.classroom.should_park():
-            note += (
-                " The student just asked another doubt but the live doubt limit for this part is used up (or time is "
-                "short): call park_doubt with it now instead of answering, unless it is a one-line clarification of "
-                "the board."
-            )
+        note += self._doubt_note()
         chat_ctx.add_message(role="system", content=note)
         return Agent.default.llm_node(self, chat_ctx, tools, model_settings)
+
+    def _doubt_note(self) -> str:
+        where = self.classroom.turn_place
+        if where == notes.CURRENT:
+            return (" If the student just asked a doubt, it is about what you are teaching right now: answer it now, "
+                    "whatever the doubt count. Acknowledge exactly what they asked, explain simply, then tie it back "
+                    "to the board and carry on.")
+        if where == notes.CHAPTER and self.classroom.should_park():
+            return (" If the student just asked a doubt, it is about another part of this chapter and the live doubt "
+                    "limit for this part is used up (or time is short): acknowledge exactly what they asked in one "
+                    "line and call park_doubt with it instead of answering now.")
+        if where == notes.CHAPTER:
+            return (" If the student just asked a doubt, it is about this chapter: acknowledge exactly what they asked "
+                    "and answer it now, briefly, then come back to the board.")
+        if where == notes.OTHER:
+            return " This is not about this chapter, so never put it on the doubt list."
+        return ""
 
     def tts_node(self, text: AsyncIterable[str], model_settings: ModelSettings):
         return Agent.default.tts_node(self, speech.voice_stream(text), model_settings)
@@ -65,9 +77,9 @@ class Teacher(Agent):
     @function_tool()
     async def park_doubt(self, context: RunContext, doubt: str) -> str:
         """Put the student's doubt on the class doubt list (shown on screen) to answer in doubt time at
-        the end of class. Use only when the live doubt limit for this part is used up or time is almost up,
-        and only for a real question about this chapter's science. Never park replies like "okay",
-        "haan", "samajh gaya" or "no doubt", and never park off-topic chat.
+        the end of class. Only for a real question about another part of this chapter, when the live
+        doubt limit for this part is used up or time is almost up. Never park a doubt about what is on
+        the board right now (answer it), replies like "okay" or "samajh gaya", or off-topic chat.
 
         Args:
             doubt: the doubt in a few words, e.g. "why is copper not magnetic"

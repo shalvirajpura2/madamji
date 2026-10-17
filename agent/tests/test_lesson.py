@@ -224,3 +224,18 @@ def test_only_chapter_doubts_are_related():
     assert related("which direction does the compass needle point", "g6-magnets")
     assert not related("who won the cricket match", "g6-magnets")
     assert not related("okay thank you", "g6-magnets")
+
+
+def test_doubts_are_placed_by_part():
+    from ustaad_agent.notes import CHAPTER, CURRENT, FILLER, OTHER, place
+
+    # part 1 of magnets: what a magnet pulls
+    assert place("why is copper not attracted", "g6-magnets", 0) == CURRENT
+    assert place("is a plastic spoon pulled by a magnet", "g6-magnets", 0) == CURRENT
+    assert place("why does a compass point north", "g6-magnets", 0) == CHAPTER
+    assert place("who won the cricket match", "g6-magnets", 0) == OTHER
+    assert place("okay ma'am", "g6-magnets", 0) == FILLER
+    # the same compass doubt is about the board once that part is being taught
+    assert place("why does a compass point north", "g6-magnets", 2) == CURRENT
+    # food chapter, balanced diet part
+    assert place("what should we eat for lunch in our daily life", "g6-food", 3) in (CURRENT, CHAPTER)

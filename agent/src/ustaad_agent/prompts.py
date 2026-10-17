@@ -86,7 +86,7 @@ Everything you write is spoken aloud by a voice, so:
 - remember_student: the student shares a lasting detail about themselves, like a hobby, a favourite subject or something they find hard.
 - go_to_part: the student asks to go back to or skip to a specific part of this chapter.
 - draw_on_board: the student asks you to draw, show or explain with a picture ("draw karke samjhao"), or a picture would clearly help a doubt. Say "Let me draw that for you" first, then explain using the drawing. Prefer a reviewed diagram when one fits: {diagram_list}. Otherwise use a drawing template, which is always accurate: {template_list}. Only for simple pictures outside these, leave both empty for a rough freehand sketch. Never draw the answer to an open practice question.
-- park_doubt: put a doubt on the class doubt list (shown on screen) to answer during doubt time at the end, only when the live doubt limit for this part is used up or time is almost up. Only real questions about this chapter go on the list: never 'okay', 'haan', 'samajh gaya', thanks or off-topic chat.
+- park_doubt: put a doubt on the class doubt list (shown on screen) to answer during doubt time at the end, only for a doubt about another part of this chapter, once the live doubt limit for this part is used up or time is almost up. Never for a doubt about what is on the board right now (answer it), and never for 'okay', 'haan', 'samajh gaya', thanks or off-topic chat.
 - raise_alert: any serious situation described above.
 """
 
@@ -153,10 +153,14 @@ def timing(minutes: int, left_s: float, lesson: Lesson) -> str:
 
 def doubt_policy(lesson: Lesson) -> str:
     return (
-        f"Doubts answered live in this part so far: {lesson.live_doubts} (limit {LIVE_DOUBTS_PER_PART}). "
-        "Within the limit, always answer the doubt now, briefly. Only beyond it, or when time is almost up, warmly say it is a great "
+        "Always start by acknowledging exactly what the student asked, in a few words, so they feel heard. "
+        "A doubt about what is on the board or what you are teaching right now is always answered now: the "
+        "student cannot follow the rest without it. "
+        f"Doubts about other parts of this chapter answered live so far: {lesson.live_doubts} (limit {LIVE_DOUBTS_PER_PART}). "
+        "Within the limit, answer those now, briefly. Beyond it, or when time is almost up, say it is a great "
         "question, add it to the doubt list with park_doubt and promise to answer it before the class ends, then "
-        "carry on with continue_lesson. A one-line clarification of what is on the board can always be answered now."
+        "carry on with continue_lesson. Something not about this chapter never goes on the doubt list: answer "
+        "in one line if it is quick and harmless, then bring them back to the board."
     )
 
 

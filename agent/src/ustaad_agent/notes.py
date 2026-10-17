@@ -82,6 +82,36 @@ def related(text: str, chapter_id: str) -> bool:
     return bool(words) and any(p.chapter_id == chapter_id for p in index().search(words, limit=50))
 
 
+FILLER, CURRENT, CHAPTER, OTHER = "filler", "current", "chapter", "other"
+
+
+@cache
+def _sections(chapter_id: str) -> tuple[list[set[str]], Counter]:
+    bags = [
+        set(tokens(" ".join([s.title, *(f"{b.board} {b.teach}" for b in s.beats)])))
+        for s in chapters()[chapter_id].sections
+    ]
+    return bags, Counter(t for bag in bags for t in bag)
+
+
+def place(text: str, chapter_id: str, section: int) -> str:
+    """Where a student's turn belongs: FILLER ("okay", "samajh gaya"), CURRENT (about the part being
+    taught right now), CHAPTER (another part of this chapter) or OTHER (not about this chapter).
+    Words found in every part, like "magnet", count for little; distinctive words decide the part."""
+    from .lesson import ACK_WORDS, is_filler
+
+    if is_filler(text):
+        return FILLER
+    words = {w for w in tokens(text) if w not in ACK_WORDS}
+    bags, df = _sections(chapter_id)
+    n = len(bags)
+    scores = [sum(math.log(1 + n / df[w]) for w in words if w in bag) for bag in bags]
+    best = max(scores, default=0)
+    if best > 0 and 0 <= section < n and scores[section] >= 0.8 * best:
+        return CURRENT
+    return CHAPTER if related(text, chapter_id) else OTHER
+
+
 def search(query: str, grade: int | None = None) -> str:
     found = index().search(query, grade=grade)
     if not found:

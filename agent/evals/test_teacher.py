@@ -233,3 +233,26 @@ async def test_draws_when_asked_and_picks_the_right_template():
         assert room.drawing["kind"] == "template" and room.drawing["template"] == "magnets"
         assert room.drawing["params"] == {"left": "N", "right": "N"}
         await judge(r, "Explains, referring to the drawing on the board, that two north poles repel each other.")
+
+
+async def test_board_doubt_is_answered_even_after_the_limit():
+    session, room = await classroom()
+    room.lesson.live_doubts = 2
+    await room._refresh()
+    async with session:
+        r = await reply(session, "Ma'am but why is copper not attracted? It is also a metal na")
+        assert not any(e.type == "function_call" and e.item.name == "park_doubt" for e in r.events)
+        assert room.lesson.doubts_left == 0
+        await judge(r, "Acknowledges the copper question and answers it now: copper is a metal but not a magnetic "
+                       "material. Does not put it on a doubt list.")
+
+
+async def test_off_topic_question_never_goes_on_the_doubt_list():
+    session, room = await classroom()
+    room.lesson.live_doubts = 2
+    await room._refresh()
+    async with session:
+        r = await reply(session, "Ma'am who won the cricket match yesterday?")
+        assert room.lesson.doubts_left == 0
+        await judge(r, "Kindly acknowledges the question without adding it to any doubt list and brings the student "
+                       "back to magnets.")
