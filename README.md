@@ -1,184 +1,221 @@
-# MadamJi
+<p align="center">
+  <img src="web/app/icon.svg" width="96" alt="MadamJi logo" />
+</p>
 
-A voice-first science teacher for Indian school students. Pick a chapter, walk into class, and
-**Meera Ma'am** teaches it part by part on a green chalkboard. She checks for doubts, asks practice
-questions, judges your answer and gives hints, all in a warm Indian voice that follows your language:
-English, Hinglish or Hindi. You can interrupt her any time, just like in a real class.
+<h1 align="center">MadamJi</h1>
 
-- Subject: Science · Grades: 6 and 10 · 3 NCERT chapters each
-- Demo: _add Vercel link_ · Walkthrough video: _add Loom link_
+<p align="center">
+  <b>A voice science teacher for Indian school students. She leads the class, writes on the chalkboard,<br/>
+  asks questions, clears doubts and never just hands you the answer.</b>
+</p>
 
-| Class 6 | Class 10 |
+<p align="center">
+  Science · Class 6 &amp; Class 10 · English, Hinglish and Hindi · Voice-first, works on phones
+</p>
+
+<!-- Live demo: <link> · Walkthrough video: <link> -->
+
+<p align="center">
+  <img src="docs/screenshots/classroom.jpg" alt="Meera Ma'am teaching on the chalkboard" />
+</p>
+
+---
+
+## What it is
+
+Pick a chapter, choose a 15 or 25 minute class, and walk into a classroom. **Meera Ma'am** greets you
+by name and teaches the chapter part by part, writing each point on a green chalkboard as she speaks.
+After every part she checks for doubts and gives a practice question. You can talk to her any time,
+even in the middle of her sentence, just like a real class.
+
+**In class she:**
+
+- **Leads the lesson herself.** The class runs from start to finish even if the student never speaks.
+- **Teaches to your grade.** Short stories and everyday Indian examples for class 6. NCERT definitions,
+  formulas and board-exam tips for class 10.
+- **Asks practice questions and never gives the answer away.** MCQ, true/false, fill in the blank,
+  numericals and short answers. A wrong answer earns a stronger hint each time (wrong options fade out,
+  a blank gets its first letter, a numerical gets its formula set up) until you get it yourself.
+- **Clears doubts like a teacher with a full class.** Two doubts per part are answered on the spot.
+  More go on an on-screen doubt list, and she answers every one in doubt time before the class ends.
+- **Draws when you ask.** "Can you explain it by drawing?" A diagram appears on the board while she talks.
+- **Speaks your language.** She starts in English and follows you into Hinglish or Hindi. Captions
+  are always in English letters.
+- **Runs to time.** A class timer keeps her on track. If time runs out, she wraps up and the next class
+  starts where you stopped.
+- **Remembers you.** Your name, where you stopped, what you found tricky.
+- **Handles real life like a person would.** Fees, exams, "are you a robot?", a maths question in
+  science class, "book me a flight", hunger, anger, a fight with a friend, the same question asked
+  three times.
+- **Keeps children safe.** Talk of self-harm, abuse or hurting someone gets a calm, caring reply, the
+  Tele MANAS helpline (14416), a paused lesson, and an alert with a sound ping on the staff dashboard.
+
+| Practice that teaches | Drawing on request | Doubt time |
+| --- | --- | --- |
+| ![A wrong answer gets a hint, not the answer](docs/screenshots/question-hint.jpg) | ![Two north poles facing each other, drawn on the chalkboard](docs/screenshots/drawing.jpg) | ![Doubt list answered at the end of class](docs/screenshots/doubt-time.jpg) |
+
+| Pick a chapter | First-time tour | On a phone |
+| --- | --- | --- |
+| ![Chapter list](docs/screenshots/chapters.jpg) | ![Guided tour of the classroom](docs/screenshots/tour.jpg) | ![MadamJi on a phone](docs/screenshots/mobile.jpg) |
+
+### Chapters
+
+| Class 6 (NCERT Curiosity) | Class 10 (NCERT Science) |
 | --- | --- |
 | Exploring Magnets | Electricity |
 | Mindful Eating | Magnetic Effects of Electric Current |
 | A Journey through States of Water | Life Processes: Nutrition and Respiration |
 
-The grade 10 chapters deliberately overlap with grade 6 ones (magnets → electromagnetism,
-food → nutrition), so you can hear the same teacher explain related ideas at two different depths.
+The class 10 chapters build on class 6 ones (magnets → electromagnetism, food → nutrition), so you can
+hear the same teacher explain related ideas at two very different depths.
 
-## What makes it a teacher, not a chatbot
+---
 
-**The code runs the class; the LLM speaks in it.** A small lesson engine
-([agent/src/ustaad_agent/lesson.py](agent/src/ustaad_agent/lesson.py)) holds the class position and
-decides what happens next:
+## Why it's built this way
 
-```
-intro → teach beat 1..n → "any doubts?" → practice question → feedback → next part … → doubt time → wrap-up
-            ▲                  │                 │                                         ▲
-            └── interrupted? ──┴── doubt answered live (2 per part) ── or parked on the doubt list
-```
+**A teacher leads; a chatbot waits.** One big prompt that says "be a teacher" drifts, skips parts and
+forgets to ask questions. MadamJi has a small **lesson engine** that holds the class position and decides
+what happens next. The AI does what a human teacher improvises: the words, the examples, the tone, and
+the replies to whatever the student says.
 
-Each step gives the LLM one focused instruction ("teach this point, you are writing X on the board").
-The student can talk at any moment. The LLM then handles the doubt with the whole class context
-and calls `continue_lesson` when the student is ready, so the class always gets back on track.
-If the student goes quiet, the teacher nudges, then hints, then moves on, like a person would.
+**Fixed content, live delivery.** Everything a parent or exam could hold us to is written down and
+versioned: the order of the lesson, what goes on the board, the teacher's notes, every question, answer,
+hint and common mistake. The AI turns that into natural speech for this student, in this grade, in this
+language, right now.
 
-- **Leads without being asked.** The class runs end to end even if the student never speaks.
-- **Board in sync with the voice.** Each teaching beat writes one chalk line, and diagrams draw in alongside.
-- **Practice that teaches.** MCQ, true/false, fill-in-the-blank, numericals and short answers. Answers are
-  graded in code (fast and exact, and spoken answers like "B wala", "doosra option" or "four forty ohm" work).
-  Short answers fall back to an LLM judge. **The teacher never gives the answer away:** wrong answers,
-  "skip" or "just tell me" earn hints that get stronger step by step (wrong MCQ options fade out, a
-  blank gets its first letter, a numerical gets its formula set up), and the student always finishes it.
-- **Runs to time.** The student picks a 15 or 25 minute class. A countdown is on screen; when time runs
-  low she stops starting new parts, and next class resumes from where she stopped.
-- **Keeps a doubt list.** Two doubts per part are answered on the spot. Beyond that, or when time is short,
-  she parks them on an on-screen doubt list (up to 5) and answers every one in "doubt time" before the class ends.
-- **Draws when you ask.** "Can you explain it by drawing?" She draws on the chalkboard while she talks:
-  one of 15 reviewed diagrams if it fits, otherwise a code-drawn science template (two magnets with any
-  poles facing, series or parallel circuits, field around a wire, refraction and reflection, step flows),
-  which is correct by construction. Only for simple pictures outside these does a model sketch freehand,
-  labelled "rough sketch" and cleaned with a strict allowlist. In testing, freehand AI drawings of field lines
-  were wrong even from strong models, which is why the physics is drawn by code.
-- **Every class is on record.** Each class is saved as a transcript with the chapter's content version:
-  what the lesson plan asked for (board line and notes), what she actually said, what the student said, and
-  every tool call with its result. On `/staff` you can trace a wrong statement to the notes or to the AI.
-- **Follows your language.** The class starts in English. Each student turn is classified in code
-  (English, Hinglish or Hindi), and she switches with you and stays there. Captions are always in Roman script.
-- **Adapts to the grade.** Class 6: short sentences, stories, a slower pace. Class 10: the NCERT
-  definition first, formulas and units, board-exam tips, a brisker pace.
-- **Remembers you.** Name, where you stopped, what you found tricky, and small personal details.
-  The next class opens from there ("Pichhli baar poles kiye the…").
-- **Human handling of everything else.** 12 common FAQs (fees, exams, "are you a robot?"),
-  maths-in-science-class, flight bookings and movies, hunger, anger, fights with friends,
-  and repeated questions, which she notices and handles with growing firmness. All of this lives in
-  one persona prompt, not a wall of guardrails, so normal turns stay fast.
-- **Safety beyond a teacher.** Talk of self-harm, abuse or hurting someone makes the teacher call
-  `raise_alert`: she responds with care, shares Tele MANAS 14416, and pauses the lesson.
-  A cheap background check (a keyword prefilter, then a small model) backs it up without adding
-  latency. Alerts are logged on the backend and appear on `/staff` with a sound ping.
+**Grading is code, not opinion.** Answers are checked against the stored answer, so "B wala",
+"doosra option" and "four forty ohm" all work and grading is never a guess. Only free-text answers get a
+second opinion from a model.
 
-## Architecture
+**Diagrams where direction matters are drawn by code.** We asked strong models to sketch two north poles
+facing each other. Every freehand drawing joined N to N, which teaches the opposite of the truth. So
+magnets, circuits, fields around a wire and light rays are drawn by templates that are correct by
+construction. The AI only picks the template and its settings. Freehand sketches are kept for simple
+pictures and are labelled as rough sketches.
+
+**Light guardrails, fast replies.** Handling the odd situation lives in one persona prompt, plus a
+background safety check that runs off the critical path. The 99% of normal turns pay nothing for the 1%.
+
+**Every class is on record.** Each class is saved with the exact version of the chapter it taught:
+what the lesson plan asked for, what the teacher actually said, what the student said, and every tool
+call. A wrong statement can be traced to the notes or to the AI improvising it.
+
+**Voice choices made by ear.** The teacher's voice is ElevenLabs `eleven_v4_turbo` with an Indian
+voice, or Sarvam's Hinglish voices, switchable with one setting. `./dev.sh compare-voices` builds a
+blind listening page so the choice is made by listening, not by spec sheet.
+
+---
+
+## How it works
 
 ```
-browser (next.js on vercel)              livekit cloud               python agent (livekit agents 1.8)
-┌──────────────────────────┐  webrtc  ┌─────────────┐  webrtc  ┌─────────────────────────────────────┐
-│ chalkboard, teacher,     │◀────────▶│    room     │◀────────▶│ silero vad + multilingual turn model│
-│ question cards, controls │  audio   │             │          │ sarvam saaras:v4 stt (auto language)│
-│ timer, doubt list        │  rpc  ──▶│ answer/hand │          │ gpt-4.1-mini via livekit inference  │
-│                          │◀── attrs │ lesson state│          │ elevenlabs v4 turbo or sarvam tts   │
-└─────────┬────────────────┘          └─────────────┘          │ lesson engine · grading · glossary  │
-          │ /api/token (loads memory into the agent dispatch)  │ notes search · safety monitor       │
-          ▼                                                    └───────────────┬─────────────────────┘
-   store: supabase (or a local json file in dev) ◀── /api/agent/events ────────┘
+ Student's browser (Next.js)          LiveKit Cloud               Teacher agent (Python, LiveKit Agents)
+┌───────────────────────────┐  WebRTC ┌──────────────┐  WebRTC ┌──────────────────────────────────────┐
+│ chalkboard · Meera Ma'am  │◀───────▶│     room     │◀───────▶│ Silero VAD · turn detector           │
+│ questions · timer · doubts│  audio  │              │  audio  │ Sarvam saaras:v4 speech to text      │
+│ tour · captions · controls│  RPC  ─▶│ taps, pause  │         │ gpt-4.1-mini (+ fallback) + 8 tools  │
+│                           │◀─ state │ lesson state │         │ ElevenLabs v4 Turbo / Sarvam voice   │
+└─────────────┬─────────────┘         └──────────────┘         │ lesson engine · grading · drawing    │
+              │ /api/token (loads the student's memory)         │ glossary · safety · transcripts      │
+              ▼                                                └──────────────────┬───────────────────┘
+      Supabase: students, progress, alerts, transcripts ◀──── /api/agent/events ──┘
 ```
 
-- **Transport:** LiveKit (WebRTC). Echo cancellation, noise cancellation (BVC) and reconnects come built in.
-- **Turn taking:** Silero VAD, LiveKit's multilingual end-of-turn model, adaptive interruption
-  (ignores "hmm" and coughs), and false-interruption resume. Endpointing waits longer while a question
-  is open, because kids think out loud.
-- **Streaming:** the LLM streams into the TTS sentence by sentence, with preemptive generation turned on.
-- **Models:** the teacher LLM is `openai/gpt-4.1-mini` through LiveKit Inference (fast first token, reliable
-  tool calls, no extra key), with an automatic fallback to `google/gemini-2.5-flash` if it errors or stalls.
-  The voice is ElevenLabs `eleven_v4_turbo` with an Indian library voice, or Sarvam `bulbul:v4-flash`
-  (`TTS_PROVIDER` in `agent/.env.local`).
-- **Screen awareness:** the agent publishes a lesson snapshot as a participant attribute (phase, board
-  lines, question, result, mood). The same snapshot goes into the LLM's instructions, so it knows exactly
-  what the student can see. Taps (answers, raise hand, pause, "no doubts") come back as RPCs.
-- **Captions in Roman script:** the LLM is told to write Hinglish in Roman letters. Speech-to-text uses
-  transliteration mode, and the caption stream converts any stray Devanagari as a safety net.
-- **Pronunciation glossary:** [content/glossary.json](content/glossary.json) rewrites terms like NCERT,
-  CO₂, I²R and Oersted for the voice only. Captions keep the original text.
-- **Retrieval:** BM25 over our own chapter notes and lesson plans, exposed as a `search_notes` tool for
-  doubts beyond the current part, including cross-grade ones ("ye tum class 10 mein padhoge"). With
-  under 400 short passages, an in-process index answers in under a millisecond. Embeddings would add a
-  network round trip for no real gain at this size.
-- **Memory:** `remember_student` facts, plus per-chapter progress and a recap written by the engine.
-  Both are loaded into the agent's dispatch metadata, so a returning student costs no extra latency.
-
-### Repository layout
+**One class, step by step**
 
 ```
-agent/    python livekit agent: lesson engine, prompts, tools, grading, voice config, tests, evals
-web/      next.js app: landing, chapters, study room, staff alerts, api routes, storage
-content/  six chapters (sections → beats → board lines → questions → notes), faqs, glossary
-docs/     phase 1 plan and testing notes
+intro → teach point 1..n → "any doubts?" → practice question → hint … → correct → next part
+          ▲                    │                                                     │
+          └── interrupted ─────┴── doubt answered (2 per part) or put on the doubt list
+                                                         … time almost up → doubt time → wrap-up
 ```
 
-## Running it
+- **Turn taking:** voice activity detection, LiveKit's multilingual end-of-turn model, and adaptive
+  interruption that ignores "hmm" and coughs. She waits longer while a question is open, because kids
+  think out loud. Noise cancellation is on for noisy homes.
+- **Speed:** the model streams into the voice sentence by sentence, with preemptive generation, so she
+  starts speaking before the full reply is written.
+- **Screen awareness:** the agent publishes the class state (board lines, question, hints, timer, doubts,
+  drawing) to the browser, and the same state goes into the teacher's instructions. She always knows
+  what the student is looking at. Taps (answers, raise hand, pause, no doubts) come back as RPC calls.
+- **Tools the teacher can call:** `continue_lesson`, `submit_answer`, `search_notes` (retrieval over our
+  chapter notes), `remember_student`, `go_to_part`, `park_doubt`, `draw_on_board`, `raise_alert`.
+- **Language:** each student turn is classified in code as English, Hinglish or Hindi, and the class
+  follows it. Speech to text returns English letters; a safety net converts any stray Devanagari.
+- **Pronunciation:** a glossary rewrites terms like NCERT, CO₂, I²R and Oersted for the voice only,
+  while captions keep the original text.
+- **Real pause:** pausing stops her mid-sentence, stops her listening, and freezes the class clock.
+- **Resilience:** a fallback model takes over if the main one fails, and if the voice pipeline gives up
+  the class ends cleanly with progress saved instead of going silent.
 
-You need **LiveKit Cloud** (agent hosting and the LLM through LiveKit Inference), **Sarvam AI**
-(speech-to-text, and the voice if you choose it), and optionally **ElevenLabs** (a paid plan is needed
-to use Indian library voices through the API). **Supabase** is optional locally and needed on Vercel.
+### Models
+
+| Job | Model |
+| --- | --- |
+| Teacher's brain | OpenAI `gpt-4.1-mini` through LiveKit Inference, falling back to Google `gemini-2.5-flash` |
+| Listening | Sarvam `saaras:v4`: Indian speech, auto language detection, Roman-script output |
+| Teacher's voice | ElevenLabs `eleven_v4_turbo` (Indian voice) or Sarvam `bulbul:v4-flash` |
+| Safety check, short-answer judge | `gpt-4.1-mini` in the background |
+| Freehand sketches | `gpt-4.1`, cleaned with a strict allowlist on the server and again in the browser |
+| Turns and interruptions | Silero VAD, LiveKit turn detector, adaptive interruption |
+
+### Repository
+
+```
+agent/     teacher agent: lesson engine, prompts, tools, grading, drawing, safety, transcripts, tests, evals
+web/       Next.js app: landing, chapters, classroom, tour, staff dashboard, API routes, storage
+content/   six chapters (parts → teaching points → board lines → questions → notes), FAQs, glossary
+docs/      testing guide and screenshots
+```
+
+---
+
+## Run it locally
+
+You need **LiveKit Cloud** (rooms, agent hosting and the LLM through LiveKit Inference) and **Sarvam**
+(speech to text). For the ElevenLabs voice you need an **ElevenLabs** key on a paid plan, since Indian
+library voices are not available to free API keys. **Supabase** is optional locally.
 
 ```bash
-# web
+# web app
 cd web
-cp .env.example .env.local      # LiveKit keys, AGENT_SECRET, STAFF_PASSCODE (Supabase optional)
+cp .env.example .env.local      # LiveKit keys, AGENT_SECRET, STAFF_PASSCODE, Supabase (optional)
 npm install
 npm run dev                     # http://localhost:3000
 
-# agent (Linux or macOS; on Windows run it inside WSL)
+# teacher agent (Linux or macOS; on Windows run it inside WSL)
 cd agent
-cp .env.example .env.local      # LiveKit, SARVAM_API_KEY, ELEVEN_API_KEY (optional), same AGENT_SECRET
-./dev.sh download-files         # VAD and turn detector models, once
+cp .env.example .env.local      # LiveKit, SARVAM_API_KEY, ELEVEN_API_KEY, same AGENT_SECRET
+./dev.sh download-files         # voice activity and turn models, once
 ./dev.sh dev                    # joins classes as they start
-./dev.sh compare-voices         # optional: blind listening page comparing candidate voices
 ```
 
-Handy dev pages: `/dev/room/g6-magnets` walks through every study-room state without the agent, and
-`/dev/diagrams` shows every chalk diagram.
+Useful pages: `/staff` for safety alerts and class transcripts, `/dev/room/g6-magnets` to click
+through every classroom state without the agent, `/dev/diagrams` for every diagram and template.
 
-### Deploying
+## Deploy
 
-- **Web → Vercel:** set the root directory to `web`, and add the env vars from `web/.env.example`
-  (including Supabase). Run [web/supabase/schema.sql](web/supabase/schema.sql) once.
-- **Agent → LiveKit Cloud:** in `agent/` run `lk cloud auth` and `lk agent create` (first time), set
-  secrets with `lk agent update-secrets`, then deploy with `./deploy.sh`. Set `WEB_URL` to the Vercel URL.
+| Part | Where |
+| --- | --- |
+| Web app | **Vercel**, root directory `web`, env vars from `web/.env.example` |
+| Teacher agent | **LiveKit Cloud** agent hosting: `lk cloud auth`, `lk agent create`, set secrets with `lk agent update-secrets`, then `./deploy.sh` from `agent/`. Set `WEB_URL` to the Vercel URL. |
+| Database | **Supabase**: run [web/supabase/schema.sql](web/supabase/schema.sql) once |
 
 ## Testing
 
 ```bash
 cd agent
-./dev.sh test     # 92 unit tests: engine, hints, doubt list, clock, grading, language, drawing safety, transcripts
-./dev.sh evals    # 16 conversation evals with an LLM judge: faqs, distractors, safety, repeats, grades,
-                  # language following, never giving the answer, parking doubts, drawing on request
-cd ../web && npx tsc --noEmit && npx eslint .
+./dev.sh test     # 92 unit tests: lesson engine, hints, doubt list, class clock, grading of spoken answers,
+                  # every question in every chapter, language detection, drawing safety, transcripts
+./dev.sh evals    # 16 conversation tests judged by a model: FAQs, distractors, safety, repeated questions,
+                  # grade depth, language following, never giving the answer, parking doubts, drawing
+cd ../web && npx tsc --noEmit && npx eslint . && npx next build
 ```
 
-The manual test script and user-testing notes are in [docs/testing.md](docs/testing.md).
+The hands-on test script is in [docs/testing.md](docs/testing.md).
 
-## Decisions and trade-offs
+---
 
-- **Cascaded STT → LLM → TTS, not a speech-to-speech model.** Realtime models are a little faster, but
-  you lose control of the Indian accent, the glossary, Roman-script captions and reliable tool calls.
-  For a teacher, control matters more.
-- **Voice: ElevenLabs v4 Turbo or Sarvam.** v4 Turbo tops independent TTS arenas, including Hindi, and
-  has expressive Indian voices; Sarvam is built in India for code-mixed speech and streams first audio in
-  about 240 ms from India. Both are one env line away, and `./dev.sh compare-voices` builds a blind
-  listening page so the choice is made by ear, not by spec sheet.
-- **LLM through LiveKit Inference.** The free Gemini tier allowed 20 requests a day and took 2–8 s to the
-  first token, which is unusable for voice. LiveKit Inference gives about 1.3 s from India on the same
-  key that runs the rooms, with a fallback model.
-- **Hands-free voice plus buttons.** Talking is natural, but Indian homes are noisy and kids are shy.
-  So there is a raise-hand button, tap-to-answer, "No doubts, next", hints, pause, and typing as a fallback.
-- **Warm, slightly strict persona.** A favourite-teacher feel: praise is specific and varied, there is
-  humour when a kid drifts, and she gets firmer only when distraction repeats.
-- **Our own chapter notes, not NCERT text.** The content follows NCERT chapters but is written in our own
-  words, so the public repo does not redistribute copyrighted textbooks.
-
-## Not in Phase 1
-
-Login and parent accounts, more subjects, homework uploads, lip-synced video avatars, analytics,
-and payment flows. See [docs/phase-1.md](docs/phase-1.md) for the full scope and acceptance criteria.
+<p align="center">
+  Lesson content follows the NCERT chapters but is written in our own words; no textbook text is reproduced.
+</p>
