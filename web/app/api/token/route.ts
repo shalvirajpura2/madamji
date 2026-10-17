@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { AccessToken, RoomAgentDispatch, RoomConfiguration } from "livekit-server-sdk";
 import { chapterById } from "@/lib/content";
+import { allow, clientKey } from "@/lib/rate-limit";
 import { store } from "@/lib/store";
+
+const CLASSES_PER_HOUR = Number(process.env.CLASSES_PER_HOUR || 10);
 
 const AGENT_NAME = process.env.AGENT_NAME || "ustaad-teacher";
 
@@ -21,9 +24,13 @@ export async function POST(req: Request) {
     return bad("The classroom is not set up yet (missing LiveKit keys).", 503);
   }
 
+  if (!allow(clientKey(req), CLASSES_PER_HOUR, 60 * 60 * 1000)) {
+    return bad("You have started a lot of classes in the last hour. Please take a short break and try again later.", 429);
+  }
+
   const body = (await req.json().catch(() => ({}))) as Body;
   let request: ClassRequest = {};
-  try {  
+  try {
     request = JSON.parse(body.room_config?.agents?.[0]?.metadata || "{}");
   } catch {
     return bad("Bad class request.");
