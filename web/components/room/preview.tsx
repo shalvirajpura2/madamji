@@ -13,6 +13,8 @@ function frames(chapter: Chapter): Frame[] {
   const base = (over: Partial<LessonState>): LessonState => ({
     v: 1, chapter: chapter.id, phase: "teach", section: 0, sections: chapter.sections.length, sectionsDone: 0,
     revealed: 0, question: null, score: { correct: 0, attempted: 0 }, paused: false, mood: "explaining", status: "ok",
+    minutes: 15, endsAt: Date.now() + 11 * 60 * 1000,
+    doubts: [{ text: "why is copper not magnetic", answered: false }],
     ...over,
   });
   const out: Frame[] = [
@@ -32,6 +34,7 @@ function frames(chapter: Chapter): Frame[] {
   out.push({ lesson: base({ phase: "question", revealed: s.beats.length, question: qs("retry", q.options?.[0] ?? "True"), mood: "encouraging" }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Hmm, close! Ek baar aur socho…" });
   out.push({ lesson: base({ phase: "feedback", revealed: s.beats.length, question: qs("correct", q.options?.[1] ?? "False", q.options?.[1] ?? "False"), mood: "happy", score: { correct: 1, attempted: 1 } }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Bilkul sahi! Iron nail is magnetic." });
   out.push({ lesson: base({ phase: "teach", revealed: 1, section: 1, sectionsDone: 1, paused: true, mood: "calm", score: { correct: 1, attempted: 1 } }), pose: "idle", tone: "paused", text: "Class paused", caption: "Theek hai, chhota sa break." });
+  out.push({ lesson: base({ phase: "doubts", section: 1, sectionsDone: 2, doubt: 1, mood: "explaining", endsAt: Date.now() + 100 * 1000, doubts: [{ text: "why is copper not magnetic", answered: true }, { text: "can a magnet lose its power", answered: false }] }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Next doubt on our list: can a magnet lose its power?" });
   out.push({ lesson: base({ phase: "wrap", section: chapter.sections.length - 1, sectionsDone: chapter.sections.length, mood: "proud", score: { correct: 7, attempted: 8 } }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Aaj ki class yahin khatam!" });
   return out;
 }

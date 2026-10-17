@@ -89,7 +89,7 @@ async def test_fee_question_goes_to_parents_and_back_to_class():
     session, _ = await classroom()
     async with session:
         r = await reply(session, "Ma'am aapki fees kitni hai?")
-        await judge(r, "Says fees or money are a matter for parents or the Ustaad team, "
+        await judge(r, "Says fees or money are a matter for parents or the MadamJi team, "
                        "without quoting a price, and brings the student back to the lesson.")
         assert not DEVANAGARI.search(spoken(r))
 
@@ -209,3 +209,14 @@ async def test_english_student_gets_english_class():
         r = await reply(session, "achha ma'am, toh steel ka spoon kyun chipakta hai?")
         assert room.language in ("hinglish", "hindi")
         await judge(r, "Switches to replying in Hinglish or Hindi written in Roman letters.")
+
+
+async def test_extra_doubt_goes_on_the_doubt_list():
+    session, room = await classroom()
+    room.lesson.live_doubts = 2  # two doubts already answered live in this part
+    await room._refresh()
+    async with session:
+        r = await reply(session, "Ma'am one more doubt, why does a compass not work near a magnet?")
+        r.expect.contains_function_call(name="park_doubt")
+        assert room.lesson.doubts_left == 1
+        await judge(r, "Warmly says the question is added to the doubt list and will be answered before class ends.")

@@ -23,18 +23,45 @@ export function Board({ chapter, lesson, compact = false }: { chapter: Chapter; 
     );
   }
 
+  if (phase === "doubts") {
+    return (
+      <BoardFrame>
+        <div className="flex h-full flex-col gap-4">
+          <h2 className="chalk text-3xl font-bold" style={{ color: "var(--color-chalk-yellow)" }}>
+            Doubt time ❓
+          </h2>
+          <ol className="flex flex-col gap-3">
+            {(lesson.doubts ?? []).map((d, i) => (
+              <li
+                key={i}
+                className={`chalk flex gap-3 text-xl leading-snug sm:text-2xl ${d.answered ? "line-through opacity-50" : ""}`}
+                style={i === lesson.doubt ? { color: "var(--color-chalk-pink)" } : undefined}
+              >
+                <span>{d.answered ? "✓" : `${i + 1}.`}</span>
+                <span>{d.text}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </BoardFrame>
+    );
+  }
+
   if (phase === "wrap") {
+    const early = lesson.sectionsDone < chapter.sections.length;
     return (
       <BoardFrame>
         <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-          <p className="chalk text-5xl">⭐</p>
-          <h2 className="chalk chalk-write text-4xl font-bold">Chapter complete!</h2>
+          <p className="chalk text-5xl">{early ? "⏰" : "⭐"}</p>
+          <h2 className="chalk chalk-write text-4xl font-bold">{early ? "That's all for today!" : "Chapter complete!"}</h2>
           <p className="chalk text-2xl" style={{ color: "var(--color-chalk-yellow)" }}>
             Score: {lesson.score.correct} / {lesson.score.attempted}
           </p>
           <ul className="chalk mt-2 space-y-1 text-lg opacity-90">
-            {chapter.sections.map((s) => (
-              <li key={s.id}>✓ {s.title}</li>
+            {chapter.sections.map((s, i) => (
+              <li key={s.id} className={i < lesson.sectionsDone ? "" : "opacity-40"}>
+                {i < lesson.sectionsDone ? "✓" : "○"} {s.title}
+              </li>
             ))}
           </ul>
         </div>

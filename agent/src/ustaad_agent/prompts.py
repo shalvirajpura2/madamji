@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from . import grading
 from .content import Chapter, Question, faqs
 from .language import ENGLISH, STYLE
-from .lesson import CHECK, FEEDBACK, INTRO, QUESTION, TEACH, WRAP, Lesson, Step
+from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, LIVE_DOUBTS_PER_PART, QUESTION, TEACH, WRAP, Lesson, Step
 
 TEACHER = "Meera Ma'am"
 
@@ -37,7 +37,7 @@ GRADE_STYLE = {
 
 def persona() -> str:
     faq_lines = "\n".join(f"- \"{f['q']}\" → {f['guide']}" for f in faqs())
-    return f"""You are {TEACHER}, a science teacher on Ustaad, an online classroom for Indian school students. You have taught in Indian schools for fifteen years. You are warm and patient, a little strict about focus, and gently funny. You care about the child more than the syllabus. You are an AI teacher and you never pretend to be human, but you teach exactly like a real classroom teacher.
+    return f"""You are {TEACHER}, a science teacher on MadamJi, an online classroom for Indian school students. You have taught in Indian schools for fifteen years. You are warm and patient, a little strict about focus, and gently funny. You care about the child more than the syllabus. You are an AI teacher and you never pretend to be human, but you teach exactly like a real classroom teacher.
 
 # How you speak
 Everything you write is spoken aloud by a voice, so:
@@ -82,6 +82,7 @@ Everything you write is spoken aloud by a voice, so:
 - search_notes: look up the chapter notes for a science doubt you are not sure about or that goes beyond this part.
 - remember_student: the student shares a lasting detail about themselves, like a hobby, a favourite subject or something they find hard.
 - go_to_part: the student asks to go back to or skip to a specific part of this chapter.
+- park_doubt: put a doubt on the class doubt list (shown on screen) to answer during doubt time at the end, only when the live doubt limit for this part is used up or time is almost up.
 - raise_alert: any serious situation described above.
 """
 
@@ -123,6 +124,10 @@ WHEN_STUDENT_SPEAKS = {
         "idea without giving away the answer, then ask them to try."
     ),
     FEEDBACK: "You just gave feedback on their answer. Respond, then call continue_lesson when they are ready.",
+    DOUBTS: (
+        "It is doubt time at the end of class; you are going through the doubt list. Answer follow-ups briefly. "
+        "When they are satisfied, call continue_lesson for the next doubt."
+    ),
     WRAP: (
         "The chapter is finished. Chat warmly. They can pick the next chapter from the screen. "
         "If they want to revise a part, call go_to_part."
@@ -130,7 +135,28 @@ WHEN_STUDENT_SPEAKS = {
 }
 
 
-def classroom(lesson: Lesson, student: Student, language: str = ENGLISH) -> str:
+def timing(minutes: int, left_s: float, lesson: Lesson) -> str:
+    left = max(0, round(left_s / 60))
+    line = f"Class time: {minutes}-minute class, about {left} minutes left."
+    if lesson.out_of_time:
+        line += (" Time is almost up: do not start anything new, keep answers short, and put any new doubt on the "
+                 "doubt list with park_doubt.")
+    pending = lesson.doubts_left
+    if pending:
+        line += f" Doubt list: {pending} waiting for doubt time."
+    return line
+
+
+def doubt_policy(lesson: Lesson) -> str:
+    return (
+        f"Doubts answered live in this part so far: {lesson.live_doubts} (limit {LIVE_DOUBTS_PER_PART}). "
+        "Within the limit, always answer the doubt now, briefly. Only beyond it, or when time is almost up, warmly say it is a great "
+        "question, add it to the doubt list with park_doubt and promise to answer it before the class ends, then "
+        "carry on with continue_lesson. A one-line clarification of what is on the board can always be answered now."
+    )
+
+
+def classroom(lesson: Lesson, student: Student, language: str = ENGLISH, clock: str = "") -> str:
     ch = lesson.chapter
     parts = "; ".join(f"{i + 1}. {s.title}" for i, s in enumerate(ch.sections))
     correct, attempted = lesson.score()
@@ -155,6 +181,10 @@ def classroom(lesson: Lesson, student: Student, language: str = ENGLISH) -> str:
         lines.append(f"Score so far: {correct} of {attempted}.")
     if lesson.paused:
         lines.append("The student pressed pause. Keep replies tiny until they want to continue.")
+    if clock:
+        lines.append(clock)
+    if lesson.phase in (TEACH, CHECK, INTRO):
+        lines.append(doubt_policy(lesson))
     lines.append("If the student speaks now: " + WHEN_STUDENT_SPEAKS.get(lesson.phase, WHEN_STUDENT_SPEAKS[TEACH]))
     return "\n".join(lines)
 
@@ -257,6 +287,24 @@ def step(s: Step, lesson: Lesson, student: Student) -> str:
             "The student is stuck on the question (quiet, asked for help, or wanted to skip). Do not skip it and do "
             f"not say the answer. Encourage them warmly that they can do it. {_hint(q, s.hint_level, lesson)} "
             "Then ask them to give it a try. Two or three sentences."
+        )
+
+    if s.kind == "doubt":
+        doubt = lesson.doubts[s.doubt]
+        lead = ("Say it is doubt time now, and you will go through the doubt list on the screen one by one. "
+                if s.new_section else "Next doubt on the list. ")
+        return (
+            f"{lead}The student asked: \"{doubt.text}\". Answer it clearly at their level in three or four "
+            "sentences, linking it to what you taught today. Do not ask anything; you will move on right after."
+        )
+
+    if s.kind == "wrap" and s.early:
+        nxt = ch.sections[min(lesson.sections_done, len(ch.sections) - 1)]
+        return (
+            f"Class time is over. You covered {lesson.sections_done} of {len(ch.sections)} parts of {ch.title}. "
+            "Sum up what you learnt today in two sentences, praise their effort, and say the next class will start "
+            f"from part {lesson.sections_done + 1}, {nxt.title}, and you will remember where you stopped. End warmly. "
+            "Four sentences."
         )
 
     if s.kind == "wrap":

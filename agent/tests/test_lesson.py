@@ -146,3 +146,63 @@ def test_pause_stops_auto_advance():
     lesson.paused = True
     assert lesson.advance() is None
     assert lesson.proceed() is not None and not lesson.paused
+
+
+def test_parked_doubts_are_answered_in_doubt_time_before_wrap():
+    lesson = fresh()
+    lesson.start()
+    lesson.advance()
+    assert lesson.park("why is copper not magnetic") == 1
+    assert lesson.park("can magnets lose power") == 2
+    assert lesson.snapshot()["doubts"] == [
+        {"text": "why is copper not magnetic", "answered": False},
+        {"text": "can magnets lose power", "answered": False},
+    ]
+    for _ in lesson.chapter.sections:
+        finish_section(lesson)
+    assert lesson.phase == "doubts"
+    assert lesson.snapshot()["doubt"] == 0
+    step = lesson.advance()
+    assert step.kind == "doubt" and step.doubt == 1 and not step.new_section
+    step = lesson.advance()
+    assert step.kind == "wrap" and not step.early and lesson.done
+    assert all(d["answered"] for d in lesson.snapshot()["doubts"])
+
+
+def test_doubt_list_has_a_cap():
+    lesson = fresh()
+    for i in range(5):
+        assert lesson.park(f"doubt {i}") == i + 1
+    assert lesson.park("one too many") is None
+
+
+def test_out_of_time_stops_new_parts_and_wraps_early():
+    lesson = fresh()
+    lesson.start()
+    lesson.advance()
+    lesson.park("why do magnets attract iron")
+    lesson.out_of_time = True
+    finish_section(lesson)  # the current part still finishes with its questions
+    assert lesson.phase == "doubts"
+    step = lesson.advance()
+    assert step.kind == "wrap" and step.early
+    assert lesson.sections_done == 1 and not lesson.done
+
+
+def test_time_up_mid_teaching_goes_straight_to_wrap():
+    lesson = fresh()
+    lesson.start()
+    lesson.advance()
+    step = lesson.finish_early()
+    assert step.kind == "wrap" and step.early and lesson.phase == "wrap"
+
+
+def test_live_doubts_reset_each_part():
+    lesson = fresh()
+    lesson.start()
+    lesson.advance()
+    lesson.note_live_doubt()
+    lesson.note_live_doubt()
+    assert lesson.live_doubts == 2
+    finish_section(lesson)
+    assert lesson.section == 1 and lesson.live_doubts == 0

@@ -20,11 +20,16 @@ class Teacher(Agent):
         last_user = next((m for m in reversed(chat_ctx.items) if getattr(m, "role", None) == "user"), None)
         if last_user is not None:
             self.classroom.note_language(last_user.text_content or "")
+            self.classroom.note_student_turn(last_user.id)
         chat_ctx = chat_ctx.copy()
-        chat_ctx.add_message(
-            role="system",
-            content=f"Class language right now: {self.classroom.language}. {STYLE[self.classroom.language]}",
-        )
+        note = f"Class language right now: {self.classroom.language}. {STYLE[self.classroom.language]}"
+        if self.classroom.should_park():
+            note += (
+                " The student just asked another doubt but the live doubt limit for this part is used up (or time is "
+                "short): call park_doubt with it now instead of answering, unless it is a one-line clarification of "
+                "the board."
+            )
+        chat_ctx.add_message(role="system", content=note)
         return Agent.default.llm_node(self, chat_ctx, tools, model_settings)
 
     def tts_node(self, text: AsyncIterable[str], model_settings: ModelSettings):
@@ -51,8 +56,18 @@ class Teacher(Agent):
         return await self.classroom.tool_answer(context, answer)
 
     @function_tool()
+    async def park_doubt(self, context: RunContext, doubt: str) -> str:
+        """Put the student's doubt on the class doubt list (shown on screen) to answer in doubt time at
+        the end of class. Use only when the live doubt limit for this part is used up or time is almost up.
+
+        Args:
+            doubt: the doubt in a few words, e.g. "why is copper not magnetic"
+        """
+        return await self.classroom.tool_park(doubt)
+
+    @function_tool()
     async def search_notes(self, context: RunContext, query: str) -> str:
-        """Look up the Ustaad chapter notes for a science doubt.
+        """Look up the MadamJi chapter notes for a science doubt.
 
         Args:
             query: the doubt as a few English keywords, e.g. "why compass points north earth magnet"
@@ -85,7 +100,7 @@ class Teacher(Agent):
         category: str,
         summary: str,
     ) -> str:
-        """Quietly alert the Ustaad safety team about a serious situation: self-harm or suicidal
+        """Quietly alert the MadamJi safety team about a serious situation: self-harm or suicidal
         talk, wanting to seriously hurt someone, abuse, danger, or severe distress.
 
         Args:

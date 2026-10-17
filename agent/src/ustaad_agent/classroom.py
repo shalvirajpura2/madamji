@@ -6,6 +6,7 @@ finished or got interrupted, keeps the student's screen in sync, and handles tap
 import asyncio
 import json
 import logging
+import time
 
 from livekit.agents import AgentSession, JobContext, RunContext
 from livekit.agents.voice import SpeechHandle
@@ -13,7 +14,7 @@ from livekit.agents.voice import SpeechHandle
 from . import backend, grading, language, notes, prompts
 from .content import Question
 from .language import ENGLISH
-from .lesson import CHECK, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
+from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
 from .models import ask_json
 from .prompts import Student
 from .safety import Monitor
@@ -26,8 +27,12 @@ THINKING_TURN = {"min_delay": 1.2, "max_delay": 4.5}  # kids pause mid-answer, g
 
 
 class Classroom:
-    def __init__(self, ctx: JobContext, session: AgentSession, lesson: Lesson, student: Student, tts):
+    def __init__(
+        self, ctx: JobContext, session: AgentSession, lesson: Lesson, student: Student, tts, minutes: int = 15
+    ):
         self.ctx = ctx
+        self.minutes = minutes
+        self.ends_at = time.time() + minutes * 60
         self.session = session
         self.lesson = lesson
         self.student = student
@@ -43,6 +48,8 @@ class Classroom:
         self._saved_sections = lesson.sections_done
         self._advance: asyncio.Task | None = None
         self._closing = False
+        self._clock: asyncio.Task | None = None
+        self._last_user_seen = ""
 
     # ---- setup ----
 
@@ -63,11 +70,14 @@ class Classroom:
         self.session.on("close", self._on_close)
         self.ctx.add_shutdown_callback(self._shutdown)
 
+        self.ends_at = time.time() + self.minutes * 60
+        self._clock = asyncio.create_task(self._watch_clock())
         from_section = self.student.sections_done if not self.student.completed else 0
         await self.run(self.lesson.start(from_section))
 
     def _instructions(self) -> str:
-        return prompts.persona() + "\n\n" + prompts.classroom(self.lesson, self.student, self.language)
+        clock = prompts.timing(self.minutes, self.ends_at - time.time(), self.lesson)
+        return prompts.persona() + "\n\n" + prompts.classroom(self.lesson, self.student, self.language, clock)
 
     def note_language(self, text: str) -> bool:
         """Switch the class language when the student switches. Returns True if it changed.
@@ -87,6 +97,8 @@ class Classroom:
         snap = self.lesson.snapshot()
         snap["mood"] = self.mood
         snap["status"] = status
+        snap["minutes"] = self.minutes
+        snap["endsAt"] = int(self.ends_at * 1000)
         try:
             await self.ctx.room.local_participant.set_attributes({"lesson": json.dumps(snap)})
         except Exception as e:
@@ -205,6 +217,40 @@ class Classroom:
         verdict = ((await ask_json(prompt, timeout=3)) or {}).get("verdict")
         return verdict if verdict in (grading.CORRECT, grading.PARTIAL, grading.WRONG) else None
 
+    # ---- class clock ----
+
+    async def _watch_clock(self) -> None:
+        """Keeps the class inside its time: no new parts once time runs low, doubt time at the end."""
+        while not self._closing:
+            await asyncio.sleep(10)
+            left = self.ends_at - time.time()
+            reserve = 90 + 60 * min(self.lesson.doubts_left, 3)  # wrap-up plus about a minute per parked doubt
+            if not self.lesson.out_of_time and left <= reserve + 120:
+                logger.info("class clock: %.0fs left, no new parts from here", left)
+                self.lesson.out_of_time = True
+                await self._refresh()
+            busy = self.session.agent_state in ("speaking", "thinking") or self.session.user_state == "speaking"
+            if left <= 0 and not busy and not self.lesson.paused:
+                step = self.lesson.finish_early()
+                if step is not None:
+                    logger.info("class clock: time is up during %s", self.lesson.phase)
+                    await self.run(step, lead="The class time is up, so stop teaching here. ")
+
+    def note_student_turn(self, message_id: str) -> None:
+        """Counts a new student turn during teaching as a live doubt, so the teacher knows when to park."""
+        if message_id == self._last_user_seen:
+            return
+        self._last_user_seen = message_id
+        if self.lesson.phase in (TEACH, CHECK):
+            self.lesson.note_live_doubt()
+
+    def should_park(self) -> bool:
+        from .lesson import LIVE_DOUBTS_PER_PART
+
+        if self.lesson.phase not in (TEACH, CHECK):
+            return False
+        return self.lesson.live_doubts > LIVE_DOUBTS_PER_PART or self.lesson.out_of_time
+
     # ---- tools (called by the teacher LLM) ----
 
     async def tool_continue(self, ctx: RunContext) -> str:
@@ -223,6 +269,17 @@ class Classroom:
         result = await self._grade(q, answer, None)
         step = self.lesson.answer(result=result)
         return await self._tool_step(ctx, step)
+
+    async def tool_park(self, doubt: str) -> str:
+        number = self.lesson.park(doubt)
+        if self.lesson.live_doubts > 0:
+            self.lesson.live_doubts -= 1  # parked, not answered live
+        await self._refresh()
+        if number is None:
+            return ("The doubt list is full. Kindly say you will take this one in the next class, or answer it in "
+                    "one line if it is tiny, then carry on.")
+        return (f"Added as doubt number {number} on the list on the screen. In one warm line, tell the student it is "
+                "on the doubt list and you will answer it before the class ends, then call continue_lesson.")
 
     def tool_search(self, query: str) -> str:
         return notes.search(query, grade=self.student.grade)
@@ -246,9 +303,9 @@ class Classroom:
         self.mood = "concerned"
         asyncio.create_task(self._refresh())
         return (
-            "The Ustaad safety team has been alerted quietly. Now respond with calm care as your instructions say. "
-            "You may gently say a grown-up from the Ustaad team will also know, so someone can help. "
-            "Stay with them and do not teach until they say they are okay."
+            "The MadamJi safety team has been alerted quietly. Now respond with calm care as your instructions say. "
+            "You may gently say a grown-up from the MadamJi team will also know, so someone can help. "
+            "Stay with them and do not teach until they say they are okay. Do not mention the lesson at all in this reply."
         )
 
     # ---- events from the voice session ----
@@ -278,7 +335,7 @@ class Classroom:
                 )
             elif self._quiet_count <= 4:
                 await self.run(self.lesson.hint())
-        elif phase in (INTRO, TEACH, FEEDBACK):
+        elif phase in (INTRO, TEACH, FEEDBACK, DOUBTS):
             await self.run(self.lesson.proceed(), lead="The student is quiet after your reply, so carry on with the class. ")
 
     def _on_transcript(self, ev) -> None:
@@ -417,6 +474,8 @@ class Classroom:
 
     async def _shutdown(self, *_) -> None:
         self._closing = True
+        if self._clock:
+            self._clock.cancel()
         if self.lesson.phase != INTRO or self.lesson.results:
             self._save()
         await backend.flush()

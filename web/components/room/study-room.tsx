@@ -14,6 +14,27 @@ const AGENT_NAME = process.env.NEXT_PUBLIC_AGENT_NAME || "ustaad-teacher";
 
 type MicCheck = "unknown" | "checking" | "ok" | "blocked" | "missing";
 
+type ClassLength = 15 | 25;
+const LENGTHS: { minutes: ClassLength; note: string }[] = [
+  { minutes: 15, note: "A quick class: a part or two" },
+  { minutes: 25, note: "A full class: most of the chapter" },
+];
+const LENGTH_KEY = "madamji.minutes";
+
+function readLength(): ClassLength {
+  try {
+    return localStorage.getItem(LENGTH_KEY) === "25" ? 25 : 15;
+  } catch {
+    return 15;
+  }
+}
+
+function saveLength(minutes: ClassLength) {
+  try {
+    localStorage.setItem(LENGTH_KEY, String(minutes));
+  } catch {}
+}
+
 export function StudyRoom({ chapter, nextChapter }: { chapter: Chapter; nextChapter: { id: string; title: string } | null }) {
   const student = useStudent();
   const router = useRouter();
@@ -36,9 +57,10 @@ function Session({
   student: { id: string; name: string; grade: number };
 }) {
   const tokenSource = useMemo(() => TokenSource.endpoint("/api/token"), []);
+  const [minutes, setMinutes] = useState<ClassLength>(readLength);
   const session = useSession(tokenSource, {
     agentName: AGENT_NAME,
-    agentMetadata: JSON.stringify({ student, chapterId: chapter.id }),
+    agentMetadata: JSON.stringify({ student, chapterId: chapter.id, minutes }),
     agentConnectTimeoutMilliseconds: 25_000,
   });
   const [mic, setMic] = useState<MicCheck>("unknown");
@@ -117,6 +139,11 @@ function Session({
         rejoin={dropped}
         onEnter={() => enter(true)}
         onEnterWithoutMic={() => enter(false)}
+        minutes={minutes}
+        onMinutes={(m) => {
+          setMinutes(m);
+          saveLength(m);
+        }}
       />
     );
   }
@@ -138,6 +165,8 @@ function Lobby(p: {
   rejoin: boolean;
   onEnter: () => void;
   onEnterWithoutMic: () => void;
+  minutes: ClassLength;
+  onMinutes: (minutes: ClassLength) => void;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-6 px-4 py-10">
@@ -151,6 +180,26 @@ function Lobby(p: {
           <p className="mt-1 text-lg text-ink-soft">
             Meera Ma&apos;am is ready for you, {p.studentName}. She will teach, ask you questions and answer your doubts.
           </p>
+
+          <fieldset className="mt-5">
+            <legend className="mb-2 font-bold">How long is today&apos;s class?</legend>
+            <div className="grid grid-cols-2 gap-3">
+              {LENGTHS.map((l) => (
+                <button
+                  key={l.minutes}
+                  type="button"
+                  aria-pressed={p.minutes === l.minutes}
+                  onClick={() => p.onMinutes(l.minutes)}
+                  className={`rounded-2xl border-2 px-4 py-3 text-left transition ${
+                    p.minutes === l.minutes ? "border-leaf bg-leaf/10" : "border-line bg-white hover:border-marigold"
+                  }`}
+                >
+                  <span className="block text-xl font-extrabold">⏱ {l.minutes} min</span>
+                  <span className="text-sm text-ink-soft">{l.note}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
 
           <ul className="mt-5 grid gap-2 text-[15px] font-medium sm:grid-cols-3">
             <li className="rounded-2xl bg-paper-deep/70 px-3 py-2">🎧 Headphones help, but are not a must</li>

@@ -33,7 +33,7 @@ def prewarm(proc: JobProcess) -> None:
 server.setup_fnc = prewarm
 
 
-def read_metadata(raw: str) -> tuple[Student, str]:
+def read_metadata(raw: str) -> tuple[Student, str, int]:
     try:
         meta = json.loads(raw or "{}")
     except json.JSONDecodeError:
@@ -54,15 +54,16 @@ def read_metadata(raw: str) -> tuple[Student, str]:
     if chapter_id not in content.chapters():
         same_grade = [c.id for c in content.chapters().values() if c.grade == grade]
         chapter_id = (same_grade or list(content.chapters()))[0]
-    return student, chapter_id
+    minutes = 25 if int(meta.get("minutes") or 15) >= 25 else 15
+    return student, chapter_id, minutes
 
 
 @server.rtc_session(agent_name=settings.agent_name)
 async def classroom_session(ctx: JobContext) -> None:
-    student, chapter_id = read_metadata(ctx.job.metadata)
+    student, chapter_id, minutes = read_metadata(ctx.job.metadata)
     chapter = content.chapter(chapter_id)
     ctx.log_context_fields = {"room": ctx.room.name, "chapter": chapter_id, "student": student.id}
-    logger.info("class starting: %s, grade %s, %s", student.name, student.grade, chapter.title)
+    logger.info("class starting: %s, grade %s, %s, %s min", student.name, student.grade, chapter.title, minutes)
 
     tts = teacher_tts()
     session = AgentSession(
@@ -91,7 +92,7 @@ async def classroom_session(ctx: JobContext) -> None:
     )
 
     lesson = Lesson(chapter, sections_done=0 if student.completed else student.sections_done)
-    classroom = Classroom(ctx, session, lesson, student, tts)
+    classroom = Classroom(ctx, session, lesson, student, tts, minutes=minutes)
 
     await session.start(
         agent=classroom.teacher,

@@ -3,11 +3,13 @@ from dataclasses import dataclass, field
 from . import grading
 from .content import Chapter, Question, Section
 
-INTRO, TEACH, CHECK, QUESTION, FEEDBACK, WRAP, DONE = (
-    "intro", "teach", "check", "question", "feedback", "wrap", "done",
+INTRO, TEACH, CHECK, QUESTION, FEEDBACK, DOUBTS, WRAP, DONE = (
+    "intro", "teach", "check", "question", "feedback", "doubts", "wrap", "done",
 )
 
 MAX_HINT = 3
+LIVE_DOUBTS_PER_PART = 2  # more than this and new doubts go on the doubt list
+MAX_PARKED_DOUBTS = 5
 
 
 @dataclass
@@ -15,7 +17,7 @@ class Step:
     """One thing the teacher should say next. `auto_next` means the engine moves on by itself
     once she finishes saying it; otherwise the class waits for the student."""
 
-    kind: str  # intro | beat | resume | check | question | feedback | hint | unclear | wrap
+    kind: str  # intro | beat | resume | check | question | feedback | hint | unclear | doubt | wrap
     auto_next: bool
     section: int
     beat: int = -1
@@ -25,6 +27,14 @@ class Step:
     retry: bool = False
     new_section: bool = False
     hint_level: int = 0
+    doubt: int = -1
+    early: bool = False
+
+
+@dataclass
+class Doubt:
+    text: str
+    answered: bool = False
 
 
 @dataclass
@@ -54,6 +64,10 @@ class Lesson:
     revealed: int = 0
     last_grade: grading.Grade | None = None
     results: list[Result] = field(default_factory=list)
+    doubts: list[Doubt] = field(default_factory=list)
+    live_doubts: int = 0  # answered straight away in the current part
+    out_of_time: bool = False  # set by the class timer: no new parts, go to doubt time
+    di: int = -1
 
     @property
     def current(self) -> Section:
@@ -83,6 +97,10 @@ class Lesson:
             return self._check()
         if self.phase == FEEDBACK:
             return self._after_question()
+        if self.phase == DOUBTS:
+            if 0 <= self.di < len(self.doubts):
+                self.doubts[self.di].answered = True
+            return self._next_doubt_or_wrap()
         return None
 
     def proceed(self) -> Step | None:
@@ -92,7 +110,7 @@ class Lesson:
         if self.phase == TEACH and self.interrupted:
             self.interrupted = False
             return Step("resume", auto_next=True, section=self.section, beat=self.beat)
-        if self.phase in (INTRO, TEACH, FEEDBACK):
+        if self.phase in (INTRO, TEACH, FEEDBACK, DOUBTS):
             self.interrupted = False
             return self.advance()
         if self.phase == CHECK:
@@ -136,6 +154,28 @@ class Lesson:
         self.paused = False
         self.interrupted = False
         return self._beat(0, new_section=True)
+
+    def park(self, text: str) -> int | None:
+        """Put a doubt on the list for doubt time. Returns its number, or None if the list is full."""
+        text = text.strip()[:160]
+        if not text or len([d for d in self.doubts if not d.answered]) >= MAX_PARKED_DOUBTS:
+            return None
+        self.doubts.append(Doubt(text))
+        return len(self.doubts)
+
+    def note_live_doubt(self) -> None:
+        self.live_doubts += 1
+
+    @property
+    def doubts_left(self) -> int:
+        return len([d for d in self.doubts if not d.answered])
+
+    def finish_early(self) -> Step | None:
+        """Time is fully up in the middle of teaching: stop here and go to doubt time or wrap."""
+        self.out_of_time = True
+        if self.phase in (INTRO, TEACH, CHECK):
+            return self._next_doubt_or_wrap()
+        return None
 
     def mark_interrupted(self) -> None:
         if self.phase in (INTRO, TEACH):
@@ -181,11 +221,22 @@ class Lesson:
         if self.qi + 1 < len(self.current.questions):
             return self._question(self.qi + 1)
         self.sections_done = max(self.sections_done, self.section + 1)
-        if self.section + 1 < len(self.chapter.sections):
+        if self.section + 1 < len(self.chapter.sections) and not self.out_of_time:
             self.section += 1
+            self.live_doubts = 0
             return self._beat(0, new_section=True)
+        return self._next_doubt_or_wrap()
+
+    def _next_doubt_or_wrap(self) -> Step:
+        pending = [i for i, d in enumerate(self.doubts) if not d.answered]
+        if pending:
+            first = self.phase != DOUBTS
+            self.phase = DOUBTS
+            self.di = pending[0]
+            return Step("doubt", auto_next=True, section=self.section, doubt=self.di, new_section=first)
         self.phase = WRAP
-        return Step("wrap", auto_next=False, section=self.section)
+        early = self.sections_done < len(self.chapter.sections)
+        return Step("wrap", auto_next=False, section=self.section, early=early)
 
     def _record(self, verdict: str) -> None:
         q = self.current.questions[self.qi]
@@ -193,7 +244,7 @@ class Lesson:
 
     @property
     def done(self) -> bool:
-        return self.phase == WRAP
+        return self.phase == WRAP and self.sections_done >= len(self.chapter.sections)
 
     def score(self) -> tuple[int, int]:
         """First-try correct answers out of questions finished."""
@@ -231,4 +282,7 @@ class Lesson:
             "question": question,
             "score": {"correct": correct, "attempted": attempted},
             "paused": self.paused,
+            "doubts": [{"text": d.text, "answered": d.answered} for d in self.doubts],
+            "doubt": self.di if self.phase == DOUBTS else -1,
+            "finished": self.phase == WRAP,
         }

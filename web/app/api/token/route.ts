@@ -9,7 +9,7 @@ type Body = {
   room_config?: { agents?: { agent_name?: string; metadata?: string }[] };
 };
 
-type ClassRequest = { student?: { id?: string; name?: string; grade?: number }; chapterId?: string };
+type ClassRequest = { student?: { id?: string; name?: string; grade?: number }; chapterId?: string; minutes?: number };
 
 function bad(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -46,8 +46,10 @@ export async function POST(req: Request) {
     console.error("store unavailable, starting class without memory", e);
   }
 
+  const minutes = Number(request.minutes) >= 25 ? 25 : 15;
   const metadata = JSON.stringify({
     chapterId: chapter.id,
+    minutes,
     student: { id, name, grade, facts },
     progress: progress && {
       sectionsDone: progress.sectionsDone,
@@ -57,7 +59,7 @@ export async function POST(req: Request) {
   });
 
   const roomName = `class-${chapter.id}-${crypto.randomUUID().slice(0, 8)}`;
-  const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, { identity: `student-${id}`, name, ttl: "30m" });
+  const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, { identity: `student-${id}`, name, ttl: "45m" });
   token.addGrant({ room: roomName, roomJoin: true, canPublish: true, canPublishData: true, canSubscribe: true });
   token.roomConfig = new RoomConfiguration({
     agents: [new RoomAgentDispatch({ agentName: AGENT_NAME, metadata })],

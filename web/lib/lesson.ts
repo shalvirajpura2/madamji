@@ -1,6 +1,6 @@
 // mirrors Lesson.snapshot() in agent/src/ustaad_agent/lesson.py
 
-export type Phase = "intro" | "teach" | "check" | "question" | "feedback" | "wrap" | "done";
+export type Phase = "intro" | "teach" | "check" | "question" | "feedback" | "doubts" | "wrap" | "done";
 export type Mood =
   | "calm"
   | "explaining"
@@ -37,6 +37,11 @@ export type LessonState = {
   paused: boolean;
   mood: Mood;
   status: "ok" | "trouble" | "ended";
+  doubts?: { text: string; answered: boolean }[];
+  doubt?: number;
+  finished?: boolean;
+  minutes?: number;
+  endsAt?: number;
 };
 
 export function parseLesson(raw: string | undefined): LessonState | null {

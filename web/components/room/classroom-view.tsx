@@ -5,6 +5,8 @@ import type { Chapter } from "@/lib/content";
 import type { LessonState, Mood } from "@/lib/lesson";
 import { Board } from "./board";
 import { Captions } from "./captions";
+import { ClassTimer } from "./class-timer";
+import { DoubtList } from "./doubt-list";
 import { Controls, StatusPill, type StatusTone } from "./controls";
 import { QuestionCard } from "./question-card";
 
@@ -34,6 +36,7 @@ export function ClassroomView(p: ClassroomViewProps) {
   const section = chapter.sections[lesson?.section ?? 0];
   const question = lesson?.question ? section?.questions.find((q) => q.id === lesson.question!.id) : undefined;
   const done = lesson?.sectionsDone ?? 0;
+  const finishedChapter = done >= chapter.sections.length;
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-3 py-3 sm:px-5 sm:py-4">
@@ -50,7 +53,7 @@ export function ClassroomView(p: ClassroomViewProps) {
         </div>
         <ol className="flex items-center gap-1.5" aria-label="Chapter parts">
           {chapter.sections.map((s, i) => {
-            const current = lesson && i === lesson.section && lesson.phase !== "intro" && lesson.phase !== "wrap";
+            const current = lesson && i === lesson.section && !["intro", "wrap", "doubts"].includes(lesson.phase);
             const finished = i < done;
             return (
               <li
@@ -65,6 +68,7 @@ export function ClassroomView(p: ClassroomViewProps) {
             );
           })}
         </ol>
+        <ClassTimer endsAt={lesson?.endsAt} minutes={lesson?.minutes} phase={lesson?.phase} />
         {lesson && lesson.score.attempted > 0 && (
           <span className="rounded-full bg-chalk-yellow/60 px-3 py-1.5 font-extrabold" title="Questions right">
             ⭐ {lesson.score.correct}/{lesson.score.attempted}
@@ -106,12 +110,23 @@ export function ClassroomView(p: ClassroomViewProps) {
 
           {lesson?.phase === "wrap" && (
             <div className="paper-card flex flex-wrap items-center gap-4 rounded-3xl p-5 animate-rise">
-              <span className="text-4xl">🎉</span>
+              <span className="text-4xl">{finishedChapter ? "🎉" : "⏰"}</span>
               <div className="flex-1">
-                <p className="text-xl font-extrabold">Shabash! You finished {chapter.title}.</p>
-                <p className="text-ink-soft">Ma&apos;am will remember how you did for next time.</p>
+                <p className="text-xl font-extrabold">
+                  {finishedChapter ? `Shabash! You finished ${chapter.title}.` : "Class time is over for today."}
+                </p>
+                <p className="text-ink-soft">
+                  {finishedChapter
+                    ? "Ma'am will remember how you did for next time."
+                    : `You did ${done} of ${chapter.sections.length} parts. Next class starts from part ${done + 1}.`}
+                </p>
               </div>
-              {p.nextChapter && (
+              {!finishedChapter && (
+                <a href={`/room/${chapter.id}`} className="rounded-2xl bg-leaf px-5 py-3 font-bold text-white">
+                  Continue the chapter →
+                </a>
+              )}
+              {finishedChapter && p.nextChapter && (
                 <a href={`/room/${p.nextChapter.id}`} className="rounded-2xl bg-leaf px-5 py-3 font-bold text-white">
                   Next: {p.nextChapter.title} →
                 </a>
@@ -147,6 +162,7 @@ export function ClassroomView(p: ClassroomViewProps) {
               </p>
             )}
           </div>
+          <DoubtList doubts={lesson?.doubts} current={lesson?.phase === "doubts" ? lesson.doubt : -1} />
         </aside>
       </div>
 
