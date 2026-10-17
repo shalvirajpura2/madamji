@@ -10,12 +10,19 @@ if TYPE_CHECKING:
     from .classroom import Classroom
 
 
+async def _silence():
+    return
+    yield
+
+
 class Teacher(Agent):
     def __init__(self, classroom: "Classroom", instructions: str) -> None:
         super().__init__(instructions=instructions)
         self.classroom = classroom
 
     def llm_node(self, chat_ctx: llm.ChatContext, tools, model_settings: ModelSettings):
+        if self.classroom.is_paused:
+            return _silence()  # class is paused: no replies, even to typed messages
         # runs for spoken and typed turns alike: follow the student's latest language from this reply on
         last_user = next((m for m in reversed(chat_ctx.items) if getattr(m, "role", None) == "user"), None)
         if last_user is not None:

@@ -49,6 +49,7 @@ class Classroom:
         self._advance: asyncio.Task | None = None
         self._closing = False
         self._clock: asyncio.Task | None = None
+        self._paused_at = 0.0
         self._last_user_seen = ""
 
     # ---- setup ----
@@ -99,6 +100,7 @@ class Classroom:
         snap["status"] = status
         snap["minutes"] = self.minutes
         snap["endsAt"] = int(self.ends_at * 1000)
+        snap["pausedAt"] = int(self._paused_at * 1000) if self._paused_at else None
         try:
             await self.ctx.room.local_participant.set_attributes({"lesson": json.dumps(snap)})
         except Exception as e:
@@ -223,6 +225,8 @@ class Classroom:
         """Keeps the class inside its time: no new parts once time runs low, doubt time at the end."""
         while not self._closing:
             await asyncio.sleep(10)
+            if self._paused_at:
+                continue  # the clock stands still during a pause
             left = self.ends_at - time.time()
             reserve = 90 + 60 * min(self.lesson.doubts_left, 3)  # wrap-up plus about a minute per parked doubt
             if not self.lesson.out_of_time and left <= reserve + 120:
@@ -243,6 +247,10 @@ class Classroom:
         self._last_user_seen = message_id
         if self.lesson.phase in (TEACH, CHECK):
             self.lesson.note_live_doubt()
+
+    @property
+    def is_paused(self) -> bool:
+        return bool(self._paused_at)
 
     def should_park(self) -> bool:
         from .lesson import LIVE_DOUBTS_PER_PART
@@ -405,16 +413,29 @@ class Classroom:
         return "ok"
 
     async def _rpc_pause(self, data) -> str:
-        await self._interrupt()
+        """A real pause: she stops mid-sentence, stops listening, and the class clock stops."""
+        if self._paused_at:
+            return "ok"
+        self._paused_at = time.time()
+        if self._advance and not self._advance.done():
+            self._advance.cancel()
+        try:
+            await self.session.interrupt(force=True)
+        except RuntimeError:
+            pass
         self.lesson.mark_interrupted()
         self.lesson.paused = True
-        self._say("The student pressed pause. Say okay in one short line, like 'Okay, a short break. Press resume when you are ready.' "
-                  "(In Hinglish: 'Theek hai, chhota sa break. "
-                  "Jab ready ho, resume dabana.')", mood="calm")
+        self.session.input.set_audio_enabled(False)
+        self.mood = "calm"
         await self._refresh()
         return "ok"
 
     async def _rpc_resume(self, data) -> str:
+        if not self._paused_at:
+            return "ok"
+        self.ends_at += time.time() - self._paused_at
+        self._paused_at = 0.0
+        self.session.input.set_audio_enabled(True)
         self.lesson.paused = False
         if self.lesson.phase == QUESTION:
             await self._refresh()
@@ -425,6 +446,8 @@ class Classroom:
         return "ok"
 
     async def _rpc_continue(self, data) -> str:
+        if self._paused_at:
+            return await self._rpc_resume(data)
         await self._interrupt()
         self._quiet_count = 0
         await self.run(self.lesson.proceed())

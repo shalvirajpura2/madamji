@@ -27,6 +27,7 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
   const level = useTrackVolume(agent.microphoneTrack);
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const micBeforePause = useRef(false);
 
   const lesson = useMemo(() => parseLesson(agent.attributes?.lesson), [agent.attributes]);
 
@@ -93,7 +94,7 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
     studentSpeaking,
     micOn: isMicrophoneEnabled,
     phase: lesson?.phase,
-    paused: Boolean(lesson?.paused),
+    paused: Boolean(lesson?.pausedAt),
     trouble: lesson?.status === "trouble" || lesson?.status === "ended",
   });
 
@@ -114,6 +115,7 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
       status={status}
       captions={captions}
       micOn={isMicrophoneEnabled}
+      hearing={studentSpeaking && isMicrophoneEnabled}
       banner={banner}
       pendingAnswer={pending}
       nextChapter={nextChapter}
@@ -123,8 +125,16 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
         if (!res) setPending(false);
       }}
       onRaiseHand={() => call("raise_hand")}
-      onPause={() => call("pause")}
-      onResume={() => call("resume")}
+      onPause={async () => {
+        // a real pause: Ma'am stops and the mic goes off until resume
+        micBeforePause.current = isMicrophoneEnabled;
+        if (isMicrophoneEnabled) await localParticipant.setMicrophoneEnabled(false).catch(() => {});
+        await call("pause");
+      }}
+      onResume={async () => {
+        if (micBeforePause.current) await localParticipant.setMicrophoneEnabled(true).catch(() => {});
+        await call("resume");
+      }}
       onContinue={() => call("continue")}
       onHint={() => sendText("Ma'am, can I get a hint please?")}
       onToggleMic={() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled).catch(() => {
@@ -153,10 +163,10 @@ function statusFor(s: {
     return { tone: "connecting", text: "Ma'am is walking into class…" };
   }
   if (s.trouble) return { tone: "trouble", text: "Ma'am's voice is having trouble. Give it a moment…" };
+  if (s.paused) return { tone: "paused", text: "Class paused · Ma'am is not listening. Tap Resume to continue" };
   if (s.agentState === "speaking") return { tone: "speaking", text: "Ma'am is speaking · just talk to interrupt" };
   if (s.agentState === "thinking") return { tone: "thinking", text: "Ma'am is thinking…" };
   if (s.studentSpeaking && s.micOn) return { tone: "you", text: "Listening to you…" };
-  if (s.paused) return { tone: "paused", text: "Class paused · tap Resume when ready" };
   if (!s.micOn) return { tone: "muted", text: "Your mic is off · tap the mic to talk, or type" };
   if (s.phase === "question") return { tone: "turn", text: "Your turn! Say or tap your answer" };
   if (s.phase === "check") return { tone: "turn", text: "Any doubts? Ask now, or tap No doubts" };

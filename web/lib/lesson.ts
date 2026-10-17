@@ -42,6 +42,7 @@ export type LessonState = {
   finished?: boolean;
   minutes?: number;
   endsAt?: number;
+  pausedAt?: number | null;
 };
 
 export function parseLesson(raw: string | undefined): LessonState | null {

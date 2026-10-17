@@ -17,6 +17,7 @@ export type ClassroomViewProps = {
   status: { tone: StatusTone; text: string };
   captions: { teacher: string; student: string };
   micOn: boolean;
+  hearing: boolean;
   banner: string | null;
   pendingAnswer: boolean;
   nextChapter?: { id: string; title: string } | null;
@@ -36,6 +37,7 @@ export function ClassroomView(p: ClassroomViewProps) {
   const section = chapter.sections[lesson?.section ?? 0];
   const question = lesson?.question ? section?.questions.find((q) => q.id === lesson.question!.id) : undefined;
   const done = lesson?.sectionsDone ?? 0;
+  const paused = Boolean(lesson?.pausedAt);
   const finishedChapter = done >= chapter.sections.length;
 
   return (
@@ -68,7 +70,7 @@ export function ClassroomView(p: ClassroomViewProps) {
             );
           })}
         </ol>
-        <ClassTimer endsAt={lesson?.endsAt} minutes={lesson?.minutes} phase={lesson?.phase} />
+        <ClassTimer endsAt={lesson?.endsAt} minutes={lesson?.minutes} phase={lesson?.phase} pausedAt={lesson?.pausedAt} />
         {lesson && lesson.score.attempted > 0 && (
           <span className="rounded-full bg-chalk-yellow/60 px-3 py-1.5 font-extrabold" title="Questions right">
             ⭐ {lesson.score.correct}/{lesson.score.attempted}
@@ -86,13 +88,16 @@ export function ClassroomView(p: ClassroomViewProps) {
         <div className="flex min-w-0 flex-col gap-4">
           <div className={`relative ${question ? "flex-none" : "min-h-[340px] flex-1"}`}>
             <Board chapter={chapter} lesson={lesson} compact={Boolean(question)} />
-            {lesson?.paused && (
+            {paused && (
               <div className="absolute inset-0 z-30 flex items-center justify-center rounded-sm bg-ink/55">
-                <div className="paper-card rounded-3xl px-8 py-6 text-center animate-pop">
-                  <p className="text-4xl">☕</p>
-                  <p className="text-2xl font-extrabold">Short break</p>
-                  <button onClick={p.onResume} className="mt-3 rounded-2xl bg-leaf px-6 py-3 text-lg font-bold text-white">
-                    I&apos;m back ▶
+                <div className="paper-card max-w-sm rounded-3xl px-8 py-6 text-center animate-pop">
+                  <p className="text-4xl">⏸</p>
+                  <p className="text-2xl font-extrabold">Class paused</p>
+                  <p className="mt-1 text-ink-soft">
+                    Ma&apos;am has stopped and is not listening. The timer is paused too.
+                  </p>
+                  <button onClick={p.onResume} className="mt-4 rounded-2xl bg-leaf px-6 py-3 text-lg font-bold text-white">
+                    Resume class ▶
                   </button>
                 </div>
               </div>
@@ -170,7 +175,8 @@ export function ClassroomView(p: ClassroomViewProps) {
         <StatusPill tone={p.status.tone} text={p.status.text} />
         <Controls
           micOn={p.micOn}
-          paused={Boolean(lesson?.paused)}
+          paused={paused}
+          hearing={p.hearing}
           phase={lesson?.phase}
           disabled={!lesson}
           onToggleMic={p.onToggleMic}

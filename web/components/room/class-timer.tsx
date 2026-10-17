@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react";
 
-export function ClassTimer({ endsAt, minutes, phase }: { endsAt?: number; minutes?: number; phase?: string }) {
+export function ClassTimer({
+  endsAt,
+  minutes,
+  phase,
+  pausedAt,
+}: {
+  endsAt?: number;
+  minutes?: number;
+  phase?: string;
+  pausedAt?: number | null;
+}) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -11,12 +21,18 @@ export function ClassTimer({ endsAt, minutes, phase }: { endsAt?: number; minute
   }, []);
 
   if (!endsAt || !minutes) return null;
-  const left = Math.max(0, Math.round((endsAt - now) / 1000));
+  const left = Math.max(0, Math.round((endsAt - (pausedAt ?? now)) / 1000));
   const total = minutes * 60;
   const mm = Math.floor(left / 60);
   const ss = String(left % 60).padStart(2, "0");
   const low = left <= 180;
-  const label = phase === "doubts" ? "Doubt time" : left === 0 ? "Time's up" : `${mm}:${ss} left`;
+  const label = pausedAt
+    ? `Paused · ${mm}:${ss}`
+    : phase === "doubts"
+      ? "Doubt time"
+      : left === 0
+        ? "Time's up"
+        : `${mm}:${ss} left`;
   const tone = left === 0 || phase === "doubts" ? "bg-plum/15 text-plum" : low ? "bg-marigold/25 text-marigold-deep" : "bg-white text-ink";
 
   return (

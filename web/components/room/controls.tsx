@@ -30,6 +30,7 @@ export function StatusPill({ tone, text }: { tone: StatusTone; text: string }) {
 
 type ControlsProps = {
   micOn: boolean;
+  hearing: boolean;
   paused: boolean;
   phase: string | undefined;
   disabled: boolean;
@@ -76,19 +77,28 @@ export function Controls(p: ControlsProps) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={p.onToggleMic}
-          disabled={p.disabled}
+          disabled={p.disabled || p.paused}
           aria-pressed={p.micOn}
-          className={`${btn} ${p.micOn ? "" : "border-coral bg-coral/10 text-coral"}`}
-          title={p.micOn ? "Mute your mic" : "Turn your mic on"}
+          className={`relative flex items-center gap-2 rounded-2xl border-2 px-3.5 py-2.5 font-bold transition active:translate-y-0.5 disabled:opacity-40 sm:px-4 ${
+            p.micOn
+              ? `border-leaf bg-leaf text-white ring-4 ${p.hearing ? "ring-leaf/60 animate-pulse" : "ring-leaf/25"}`
+              : "border-coral bg-coral/10 text-coral"
+          }`}
+          title={p.micOn ? "Your mic is on. Tap to mute" : "Your mic is off. Tap to turn it on"}
         >
           <span aria-hidden>{p.micOn ? "🎤" : "🔇"}</span>
           <span className="hidden sm:inline">{p.micOn ? "Mic on" : "Mic off"}</span>
+          {p.micOn && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-chalk-green ring-2 ring-white" aria-hidden />}
         </button>
         <button onClick={p.onRaiseHand} disabled={p.disabled || p.paused} className={btn}>
           <span aria-hidden>✋</span> Raise hand
         </button>
         {p.paused ? (
-          <button onClick={p.onResume} disabled={p.disabled} className={`${btn} border-leaf bg-leaf text-white`}>
+          <button
+            onClick={p.onResume}
+            disabled={p.disabled}
+            className="flex items-center gap-2 rounded-2xl border-2 border-leaf bg-leaf px-4 py-2.5 font-bold text-white shadow-[0_4px_0_#2c6b42] transition active:translate-y-1 active:shadow-none disabled:opacity-40"
+          >
             <span aria-hidden>▶</span> Resume
           </button>
         ) : (
@@ -96,7 +106,7 @@ export function Controls(p: ControlsProps) {
             <span aria-hidden>⏸</span> <span className="hidden sm:inline">Pause</span>
           </button>
         )}
-        <button onClick={() => setTyping((t) => !t)} disabled={p.disabled} className={btn} aria-pressed={typing}>
+        <button onClick={() => setTyping((t) => !t)} disabled={p.disabled || p.paused} className={btn} aria-pressed={typing}>
           <span aria-hidden>⌨️</span> <span className="hidden sm:inline">Type</span>
         </button>
         <div className="ml-auto flex gap-2">

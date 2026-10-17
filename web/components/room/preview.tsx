@@ -33,7 +33,7 @@ function frames(chapter: Chapter): Frame[] {
   out.push({ lesson: base({ phase: "question", revealed: s.beats.length, question: qs("open"), mood: "curious" }), pose: "listening", tone: "turn", text: "Your turn! Say or tap your answer", caption: "Quick question, screen pe dekho…" });
   out.push({ lesson: base({ phase: "question", revealed: s.beats.length, question: qs("retry", q.options?.[0] ?? "True"), mood: "encouraging" }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Hmm, close! Ek baar aur socho…" });
   out.push({ lesson: base({ phase: "feedback", revealed: s.beats.length, question: qs("correct", q.options?.[1] ?? "False", q.options?.[1] ?? "False"), mood: "happy", score: { correct: 1, attempted: 1 } }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Bilkul sahi! Iron nail is magnetic." });
-  out.push({ lesson: base({ phase: "teach", revealed: 1, section: 1, sectionsDone: 1, paused: true, mood: "calm", score: { correct: 1, attempted: 1 } }), pose: "idle", tone: "paused", text: "Class paused", caption: "Theek hai, chhota sa break." });
+  out.push({ lesson: base({ phase: "teach", revealed: 1, section: 1, sectionsDone: 1, paused: true, pausedAt: Date.now() - 20000, mood: "calm", score: { correct: 1, attempted: 1 } }), pose: "idle", tone: "paused", text: "Class paused", caption: "Theek hai, chhota sa break." });
   out.push({ lesson: base({ phase: "doubts", section: 1, sectionsDone: 2, doubt: 1, mood: "explaining", endsAt: Date.now() + 100 * 1000, doubts: [{ text: "why is copper not magnetic", answered: true }, { text: "can a magnet lose its power", answered: false }] }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Next doubt on our list: can a magnet lose its power?" });
   out.push({ lesson: base({ phase: "wrap", section: chapter.sections.length - 1, sectionsDone: chapter.sections.length, mood: "proud", score: { correct: 7, attempted: 8 } }), pose: "speaking", tone: "speaking", text: "Ma'am is speaking", caption: "Aaj ki class yahin khatam!" });
   return out;
@@ -67,6 +67,7 @@ export function Preview({ chapter }: { chapter: Chapter }) {
         status={{ tone: f.tone, text: f.text }}
         captions={{ teacher: f.caption, student: i > 3 ? "B, iron nail" : "" }}
         micOn
+        hearing={f.tone === "you"}
         banner={null}
         pendingAnswer={false}
         nextChapter={null}
