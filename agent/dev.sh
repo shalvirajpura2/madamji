@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the agent with a Linux virtualenv (also works from WSL on a Windows checkout).
-# usage: ./dev.sh [dev|console|start|download-files|test|evals]
+# usage: ./dev.sh [dev|console|start|download-files|test|evals|compare-voices]
 set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.venvs/ustaad-agent}"
@@ -16,6 +16,9 @@ if [ "${1:-dev}" = "test" ]; then
   uv run pytest -q
 elif [ "${1:-}" = "evals" ]; then
   uv run pytest -q evals "${@:2}"
+elif [ "${1:-}" = "compare-voices" ]; then
+  set -a; . ./.env.local; set +a
+  uv run python scripts/voice_compare.py
 else
   uv run python -m ustaad_agent "${@:-dev}"
 fi

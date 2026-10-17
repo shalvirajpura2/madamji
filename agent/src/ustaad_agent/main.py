@@ -17,7 +17,7 @@ from . import content
 from .classroom import NORMAL_TURN, Classroom
 from .config import settings
 from .lesson import Lesson
-from .models import teacher_llm
+from .models import teacher_llm, teacher_tts
 from .prompts import Student
 
 logger = logging.getLogger("ustaad")
@@ -64,11 +64,7 @@ async def classroom_session(ctx: JobContext) -> None:
     ctx.log_context_fields = {"room": ctx.room.name, "chapter": chapter_id, "student": student.id}
     logger.info("class starting: %s, grade %s, %s", student.name, student.grade, chapter.title)
 
-    tts = sarvam.TTS(
-        model=settings.tts_model,
-        speaker=settings.tts_speaker,
-        target_language_code=settings.tts_language,
-    )
+    tts = teacher_tts()
     session = AgentSession(
         vad=ctx.proc.userdata["vad"],
         stt=sarvam.STT(

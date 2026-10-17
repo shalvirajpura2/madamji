@@ -32,3 +32,4 @@ agent/kms/
 # web local store
 web/.data/
 agent/content/
+agent/voice_samples/

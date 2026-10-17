@@ -35,6 +35,10 @@ class Settings:
     stt_model: str = _env("STT_MODEL", "saaras:v4")
     stt_mode: str = _env("STT_MODE", "translit")
 
+    tts_provider: str = _env("TTS_PROVIDER", "sarvam")  # sarvam | elevenlabs
+    eleven_model: str = _env("ELEVEN_MODEL", "eleven_v4_turbo")
+    eleven_voice: str = _env("ELEVEN_VOICE", "a6XidOEnTywSiWFoBUhm")
+
     tts_model: str = _env("TTS_MODEL", "bulbul:v4-flash")
     tts_speaker: str = _env("TTS_SPEAKER", "simran_enhi_companion")
     tts_language: str = _env("TTS_LANGUAGE", "en-IN")

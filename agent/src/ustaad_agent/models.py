@@ -5,8 +5,8 @@ import asyncio
 import json
 import logging
 
-from livekit.agents import inference, llm
-from livekit.plugins import google
+from livekit.agents import inference, llm, tts
+from livekit.plugins import elevenlabs, google, sarvam
 
 from .config import settings
 
@@ -25,6 +25,25 @@ def teacher_llm() -> llm.LLM:
     if len(models) == 1:
         return make_llm(models[0])
     return llm.FallbackAdapter([make_llm(m) for m in models], attempt_timeout=6.0)
+
+
+def teacher_tts(provider: str | None = None, voice: str | None = None, **kw) -> tts.TTS:
+    """The teacher's voice. TTS_PROVIDER picks Sarvam (built in India for Indic speech)
+    or ElevenLabs v4 Turbo (expressive, multilingual)."""
+    provider = provider or settings.tts_provider
+    if provider == "elevenlabs":
+        return elevenlabs.TTS(
+            voice_id=voice or settings.eleven_voice,
+            model=settings.eleven_model,
+            voice_settings=elevenlabs.VoiceSettings(stability=0.5, similarity_boost=0.75),
+            **kw,
+        )
+    return sarvam.TTS(
+        model=settings.tts_model,
+        speaker=voice or settings.tts_speaker,
+        target_language_code=settings.tts_language,
+        **kw,
+    )
 
 
 _side: llm.LLM | None = None
