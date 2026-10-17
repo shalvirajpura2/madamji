@@ -111,39 +111,42 @@ blind listening page so the choice is made by listening, not by spec sheet.
 ### Architecture
 
 ```mermaid
-flowchart TB
-    student(["🧑‍🎓 Student · phone or laptop"])
+flowchart LR
+    student(["Student<br/>phone or laptop"])
 
     subgraph web["Next.js app on Vercel"]
-        direction LR
-        ui["🧑‍🏫 Classroom<br/>chalkboard · teacher · questions<br/>timer · doubt list · captions"]
-        api["⚙️ API routes<br/>class token · progress · events"]
-        staff["🛎️ Staff dashboard<br/>safety alerts · transcripts"]
+        direction TB
+        ui["Classroom<br/>chalkboard · questions<br/>timer · doubt list · captions"]
+        api["API routes<br/>class token · progress · events"]
+        staff["Staff dashboard<br/>safety alerts · transcripts"]
+        ui -- "② asks for a class" --> api
+        staff -- "⑦ watches alerts" --> api
     end
 
-    room(["🔊 LiveKit Cloud room<br/>WebRTC audio · taps · class state"])
+    room(["LiveKit Cloud room<br/>live audio + class state"])
 
-    subgraph agent["Teacher agent on LiveKit Cloud · India South"]
-        direction LR
-        ears["👂 Listening<br/>Silero VAD · turn detector<br/>Sarvam saaras:v4"]
-        brain["💭 Teacher's brain<br/>gpt-4.1-mini<br/>gemini fallback"]
-        voice["🗣️ Voice<br/>ElevenLabs v4 Turbo"]
-        engine["📋 Lesson engine<br/>parts · hints · doubts · clock"]
-        tools["🧰 Tools<br/>notes · draw · memory · alerts"]
-        ears --> brain --> voice
+    subgraph agent["Teacher agent · LiveKit Agents · India South"]
+        direction TB
+        ears["Listen<br/>noise cancel · turn detector<br/>Sarvam saaras:v4"]
+        content[("Chapters<br/>NCERT notes · questions · FAQs")]
+        engine["Lesson engine<br/>parts · hints · doubts · clock"]
+        brain["Think<br/>gpt-4.1-mini · Gemini fallback"]
+        tools["Tools<br/>grade · search notes · draw<br/>remember · park doubt · alert"]
+        voice["Speak<br/>ElevenLabs v4 Turbo<br/>+ pronunciation glossary"]
+        content --> engine
         engine -- "what to teach next" --> brain
+        ears -- "student's words" --> brain
         brain <--> tools
+        brain -- "streams reply" --> voice
     end
 
-    db[("🗄️ Supabase<br/>students · progress<br/>alerts · transcripts")]
+    db[("Supabase<br/>students · progress<br/>alerts · transcripts")]
 
-    student <--> ui
-    ui <== "voice + taps" ==> room
-    room <== "voice + class state" ==> agent
-    ui -- "start class" --> api
-    staff --> api
-    api <--> db
-    agent -. "progress · alerts · transcripts" .-> api
+    student -- "① picks a chapter" --> web
+    web -- "③ loads memory" --> db
+    web <== "④ voice + taps" ==> room
+    room <== "⑤ voice + board state" ==> agent
+    agent -. "⑥ progress · alerts · transcripts" .-> db
 
     classDef web fill:#fff6e8,stroke:#dc8a0b,stroke-width:2px,color:#2b2118
     classDef lk fill:#e8f1fb,stroke:#4c9be8,stroke-width:2px,color:#2b2118
@@ -153,61 +156,19 @@ flowchart TB
     class ui,api,staff web
     class room lk
     class ears,brain,voice,engine,tools ai
-    class db store
+    class db,content store
     class student person
 ```
 
-### One class, step by step
-
-```mermaid
-flowchart TD
-    start(["🚪 Student enters class<br/>15 or 25 minutes"]) --> intro["👋 Greets by name<br/>recaps last class"]
-    intro --> teach["✍️ Teaches the next point<br/>writes it on the board"]
-    teach --> more{"More points<br/>in this part?"}
-    more -- yes --> teach
-    more -- no --> check["🙋 Any doubts?"]
-    check --> q["📝 Practice question"]
-    q --> ans{"Correct?"}
-    ans -- no --> hint["💡 Stronger hint<br/>never the answer"]
-    hint --> q
-    ans -- yes --> praise["🎉 Praise + why it's right"]
-    praise --> time{"Time almost up?"}
-    time -- no --> teach
-    time -- yes --> doubts["📌 Doubt time<br/>answers the doubt list"]
-    doubts --> wrap(["⭐ Wrap-up<br/>progress saved for next class"])
-
-    talk(["🎤 Student talks, any time"]) -.-> live{"Doubts this part<br/>under 2?"}
-    live -. yes .-> answer["Answers now,<br/>then resumes the same point"]
-    live -. no .-> park["Adds it to the doubt list"]
-    park -.-> doubts
-
-    classDef step fill:#fff6e8,stroke:#dc8a0b,stroke-width:2px,color:#2b2118
-    classDef decide fill:#e8f1fb,stroke:#4c9be8,stroke-width:2px,color:#2b2118
-    classDef good fill:#e9f5ec,stroke:#3f8f5a,stroke-width:2px,color:#2b2118
-    class intro,teach,check,q,hint,answer,park step
-    class more,ans,time,live decide
-    class start,praise,doubts,wrap,talk good
-```
-
-### One spoken turn
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor S as 🧑‍🎓 Student
-    participant R as 🔊 LiveKit room
-    participant A as 👂 Listening
-    participant B as 💭 Teacher's brain
-    participant V as 🗣️ Voice
-    S->>R: speaks (even mid-sentence)
-    R->>A: audio stream
-    Note over A: noise cancelled · "hmm" and coughs ignored
-    A->>B: words in Roman script, as soon as the turn ends
-    Note over B: class state + language + doubt rules
-    B-->>V: reply streams sentence by sentence
-    V-->>R: audio starts before the reply is finished
-    R-->>S: Ma'am answers · board and captions update
-```
+1. The student picks a chapter and a class length (15 or 25 minutes).
+2. The app hands out a short-lived LiveKit token. The student's name, chapter and class length travel with it.
+3. Before saying hello, the teacher loads what she remembers about this student: past scores and facts like their name and favourite topic.
+4. The browser and the room stream the student's voice and taps (answers, raise hand, pause) in real time.
+5. The agent listens, thinks and speaks in one streaming loop. The lesson engine decides what comes next
+   from our own chapter content, and the model turns it into a natural spoken class. Board lines,
+   questions, hints, the timer and drawings go back to the screen as class state.
+6. Progress, safety alerts and the full transcript (tagged with the chapter version) are saved to Supabase through the app's API.
+7. Staff see safety alerts on the dashboard straight away, with a sound ping, and can read any class transcript.
 
 - **Turn taking:** voice activity detection, LiveKit's multilingual end-of-turn model, and adaptive
   interruption that ignores "hmm" and coughs. She waits longer while a question is open, because kids
