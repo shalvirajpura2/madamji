@@ -220,3 +220,16 @@ async def test_extra_doubt_goes_on_the_doubt_list():
         r.expect.contains_function_call(name="park_doubt")
         assert room.lesson.doubts_left == 1
         await judge(r, "Warmly says the question is added to the doubt list and will be answered before class ends.")
+
+
+async def test_draws_when_asked_and_picks_the_right_template():
+    session, room = await classroom()
+    async with session:
+        r = await reply(session, "ma'am can you draw karke samjhao what happens when two north poles face each other?")
+        r.expect.contains_function_call(name="draw_on_board")
+        outputs = [e.item.output for e in r.events if e.type == "function_call_output"]
+        assert not any("internal error" in str(o).lower() for o in outputs), outputs
+        assert room.drawing is not None
+        assert room.drawing["kind"] == "template" and room.drawing["template"] == "magnets"
+        assert room.drawing["params"] == {"left": "N", "right": "N"}
+        await judge(r, "Explains, referring to the drawing on the board, that two north poles repel each other.")

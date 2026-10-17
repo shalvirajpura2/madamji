@@ -11,7 +11,7 @@ import time
 from livekit.agents import AgentSession, JobContext, RunContext
 from livekit.agents.voice import SpeechHandle
 
-from . import backend, grading, language, notes, prompts
+from . import backend, drawing, grading, language, notes, prompts
 from .content import Question
 from .language import ENGLISH
 from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
@@ -65,6 +65,8 @@ class Classroom:
         self._closing = False
         self._clock: asyncio.Task | None = None
         self._paused_at = 0.0
+        self.drawing: dict | None = None  # what Ma'am drew on the board for a doubt
+        self._drawings = 0
         self._last_user_seen = ""
 
     # ---- setup ----
@@ -118,6 +120,7 @@ class Classroom:
         snap["status"] = status
         snap["minutes"] = self.minutes
         snap["endsAt"] = int(self.ends_at * 1000)
+        snap["drawing"] = self.drawing
         snap["pausedAt"] = int(self._paused_at * 1000) if self._paused_at else None
         try:
             await self.ctx.room.local_participant.set_attributes({"lesson": json.dumps(snap)})
@@ -134,6 +137,8 @@ class Classroom:
         await self._trim_history()
         await self._refresh()
         self.transcript.step(step, self.lesson)
+        if step.kind in ("beat", "question", "wrap"):
+            self.drawing = None
         handle = self.session.generate_reply(
             instructions=lead + prompts.step(step, self.lesson, self.student),
             tool_choice="none",
@@ -143,6 +148,8 @@ class Classroom:
 
     async def _tool_step(self, ctx: RunContext, step: Step) -> str:
         self.transcript.step(step, self.lesson)
+        if step.kind in ("beat", "question", "wrap"):
+            self.drawing = None
         self._voice_for(step)
         await self._refresh()
         self._track(ctx.speech_handle, step)
@@ -309,6 +316,36 @@ class Classroom:
                     "one line if it is tiny, then carry on.")
         return (f"Added as doubt number {number} on the list on the screen. In one warm line, tell the student it is "
                 "on the doubt list and you will answer it before the class ends, then call continue_lesson.")
+
+    async def tool_draw(self, what: str, diagram_id: str = "", template: str = "", options: str = "") -> str:
+        self._drawings += 1
+        params = drawing.template_params(template, options) if template in drawing.TEMPLATES else None
+        if params is not None and diagram_id not in drawing.DIAGRAMS:
+            self.drawing = {"n": self._drawings, "kind": "template", "template": template, "params": params,
+                            "title": what[:60]}
+            self.transcript.event("drawing", kind="template", template=template, params=params, what=what)
+            await self.publish()
+            return (f"The drawing is on the board ({drawing.TEMPLATES[template].split(';')[0]}, {options}). Explain the "
+                    "doubt using it, pointing to its parts, in three or four sentences.")
+        if template and params is None:
+            logger.info("draw template %s with bad options %r, falling back", template, options)
+        if diagram_id in drawing.DIAGRAMS:
+            self.drawing = {"n": self._drawings, "kind": "diagram", "id": diagram_id, "title": what[:60]}
+            self.transcript.event("drawing", kind="diagram", id=diagram_id, what=what)
+            await self.publish()
+            return (f"The reviewed diagram is now on the board ({drawing.DIAGRAMS[diagram_id]}). Explain the doubt "
+                    "using it, pointing to its parts, in three or four sentences.")
+        made = await drawing.sketch(what, self.student.grade)
+        if made is None:
+            self.transcript.event("drawing_failed", what=what)
+            return ("The sketch did not come out. Say sorry lightly and explain it in words instead, describing the "
+                    "picture simply.")
+        self.drawing = {"n": self._drawings, "kind": "sketch", "title": made["title"], "svg": made["svg"]}
+        self.transcript.event("drawing", kind="sketch", what=what, title=made["title"], facts=made["facts"], svg=made["svg"])
+        await self.publish()
+        return (f"Your sketch '{made['title']}' is now on the board. Explain the doubt using it, pointing to its parts, "
+                "in three or four sentences. It is a quick sketch, so keep the explanation correct even if the "
+                "drawing is rough.")
 
     def tool_search(self, query: str) -> str:
         return notes.search(query, grade=self.student.grade)

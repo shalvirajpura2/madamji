@@ -73,6 +73,24 @@ class Teacher(Agent):
         return await self.classroom.tool_park(doubt)
 
     @function_tool()
+    async def draw_on_board(
+        self, context: RunContext, what: str, diagram_id: str = "", template: str = "", options: str = ""
+    ) -> str:
+        """Draw on the chalkboard to explain a doubt: when the student asks you to draw, show or explain
+        with a picture, or a picture clearly helps. First say a short line like "Let me draw that for you".
+        Order of preference: a reviewed diagram if one fits exactly, else a drawing template, else leave both
+        empty for a quick freehand sketch (only simple labelled pictures, never field lines or directions).
+
+        Args:
+            what: what to draw, e.g. "field lines between two north poles facing each other"
+            diagram_id: one of the reviewed diagrams, if it fits exactly
+            template: magnets, circuit, wire_field, ray or flow
+            options: settings for the template, e.g. "N-N", "parallel 3 bulb", "up", "refraction air-glass",
+                "Mouth > Stomach > Small intestine"
+        """
+        return await self.classroom.tool_draw(what, diagram_id, template, options)
+
+    @function_tool()
     async def search_notes(self, context: RunContext, query: str) -> str:
         """Look up the MadamJi chapter notes for a science doubt.
 

@@ -1,6 +1,27 @@
 import type { Chapter } from "@/lib/content";
 import type { LessonState } from "@/lib/lesson";
+import type { Drawing } from "@/lib/lesson";
 import { Diagram, hasDiagram } from "./diagrams";
+import { Sketch } from "./sketch";
+import { TemplateArt } from "./templates";
+
+function DrawingPanel({ drawing }: { drawing: Drawing }) {
+  return (
+    <div key={drawing.n} className="mt-auto flex min-h-0 flex-col items-center gap-1">
+      <p className="chalk text-base opacity-80">
+        {drawing.kind === "sketch" ? "✏️ Ma'am's rough sketch: " : "📐 "}
+        {drawing.title}
+      </p>
+      {drawing.kind === "diagram" && drawing.id ? (
+        <Diagram id={drawing.id} />
+      ) : drawing.kind === "template" && drawing.template ? (
+        <TemplateArt template={drawing.template} params={drawing.params ?? {}} />
+      ) : drawing.svg ? (
+        <Sketch svg={drawing.svg} />
+      ) : null}
+    </div>
+  );
+}
 
 const BULLET_COLORS = ["var(--color-chalk-yellow)", "var(--color-chalk-pink)", "var(--color-chalk-blue)", "var(--color-chalk-green)"];
 
@@ -42,6 +63,7 @@ export function Board({ chapter, lesson, compact = false }: { chapter: Chapter; 
               </li>
             ))}
           </ol>
+          {lesson.drawing && <DrawingPanel drawing={lesson.drawing} />}
         </div>
       </BoardFrame>
     );
@@ -94,10 +116,14 @@ export function Board({ chapter, lesson, compact = false }: { chapter: Chapter; 
             </li>
           ))}
         </ul>
-        {diagram && (
-          <div className="mt-auto flex min-h-0 justify-center">
-            <Diagram id={diagram} />
-          </div>
+        {lesson.drawing ? (
+          <DrawingPanel drawing={lesson.drawing} />
+        ) : (
+          diagram && (
+            <div className="mt-auto flex min-h-0 justify-center">
+              <Diagram id={diagram} />
+            </div>
+          )
         )}
       </div>
     </BoardFrame>

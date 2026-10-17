@@ -32,8 +32,12 @@ class Transcript:
         self.entries: list[dict] = []
         self._saved = False
 
-    def _add(self, kind: str, **data) -> None:
-        self.entries.append({"t": round(time.time() - self.started, 1), "kind": kind, **data})
+    def _add(self, entry_kind: str, /, **data) -> None:
+        # the entry's own "kind" always wins over a field of the same name in the data
+        try:
+            self.entries.append({**data, "t": round(time.time() - self.started, 1), "kind": entry_kind})
+        except Exception as e:  # logging must never get in the way of teaching
+            logger.warning("transcript entry skipped: %s", e)
 
     def step(self, step, lesson) -> None:
         """What the lesson engine asked the teacher to do, with the exact content it was given."""
@@ -66,6 +70,8 @@ class Transcript:
         self._add("tool", name=name, args=args, output=(output or "")[:1500])
 
     def event(self, name: str, **data) -> None:
+        if "kind" in data:
+            data["type"] = data.pop("kind")
         self._add("event", name=name, **data)
 
     def save(self, summary: dict) -> None:

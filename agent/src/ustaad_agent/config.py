@@ -31,6 +31,7 @@ class Settings:
     llm_model: str = _env("LLM_MODEL", "openai/gpt-4.1-mini")
     llm_fallback: str = _env("LLM_FALLBACK", "google/gemini-2.5-flash")
     side_model: str = _env("SIDE_MODEL", "openai/gpt-4.1-mini")
+    sketch_model: str = _env("SKETCH_MODEL", "openai/gpt-4.1")  # live board sketches need a stronger model
 
     stt_model: str = _env("STT_MODEL", "saaras:v4")
     stt_mode: str = _env("STT_MODE", "translit")

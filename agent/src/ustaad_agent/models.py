@@ -49,17 +49,26 @@ def teacher_tts(provider: str | None = None, voice: str | None = None, **kw) -> 
 _side: llm.LLM | None = None
 
 
-async def ask_json(prompt: str, timeout: float = 4.0) -> dict | None:
-    """One short background question to the side model, answered as JSON."""
+_others: dict[str, llm.LLM] = {}
+
+
+async def ask_json(prompt: str, timeout: float = 4.0, model: str | None = None) -> dict | None:
+    """One short background question to the side model (or another model), answered as JSON."""
     global _side
-    _side = _side or make_llm(settings.side_model)
+    if model and model != settings.side_model:
+        if model not in _others:
+            _others[model] = make_llm(model)
+        engine = _others[model]
+    else:
+        _side = _side or make_llm(settings.side_model)
+        engine = _side
     ctx = llm.ChatContext()
     ctx.add_message(role="system", content="Reply with a single JSON object and nothing else.")
     ctx.add_message(role="user", content=prompt)
 
     async def run() -> str:
         text = ""
-        async with _side.chat(chat_ctx=ctx) as stream:
+        async with engine.chat(chat_ctx=ctx) as stream:
             async for chunk in stream:
                 if chunk.delta and chunk.delta.content:
                     text += chunk.delta.content

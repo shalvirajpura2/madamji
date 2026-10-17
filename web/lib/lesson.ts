@@ -12,6 +12,16 @@ export type Mood =
   | "listening"
   | "concerned";
 
+export type Drawing = {
+  n: number;
+  kind: "diagram" | "sketch" | "template";
+  id?: string;
+  svg?: string;
+  template?: string;
+  params?: Record<string, unknown>;
+  title: string;
+};
+
 export type QuestionState = {
   id: string;
   index: number;
@@ -43,6 +53,7 @@ export type LessonState = {
   minutes?: number;
   endsAt?: number;
   pausedAt?: number | null;
+  drawing?: Drawing | null;
 };
 
 export function parseLesson(raw: string | undefined): LessonState | null {

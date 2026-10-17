@@ -36,3 +36,12 @@ def test_transcript_records_steps_messages_tools_and_version(tmp_path, monkeypat
     assert record["entries"][3]["args"] == {"query": "copper magnetic"}
     saved = json.loads((tmp_path / "class-test.json").read_text())
     assert saved["id"] == "class-test" and len(saved["entries"]) == 5
+
+
+def test_event_fields_cannot_break_the_log(tmp_path, monkeypatch):
+    monkeypatch.setattr(transcript, "LOCAL_DIR", tmp_path)
+    chapter = chapters()["g6-magnets"]
+    t = transcript.Transcript(room="r", student={}, chapter=chapter, minutes=15, models={})
+    t.event("drawing", kind="template", template="magnets", params={"left": "N", "right": "N"})
+    entry = t.entries[-1]
+    assert entry["kind"] == "event" and entry["type"] == "template" and entry["template"] == "magnets"

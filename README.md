@@ -45,6 +45,15 @@ If the student goes quiet, the teacher nudges, then hints, then moves on, like a
   low she stops starting new parts, and next class resumes from where she stopped.
 - **Keeps a doubt list.** Two doubts per part are answered on the spot. Beyond that, or when time is short,
   she parks them on an on-screen doubt list (up to 5) and answers every one in "doubt time" before the class ends.
+- **Draws when you ask.** "Can you explain it by drawing?" She draws on the chalkboard while she talks:
+  one of 15 reviewed diagrams if it fits, otherwise a code-drawn science template (two magnets with any
+  poles facing, series or parallel circuits, field around a wire, refraction and reflection, step flows),
+  which is correct by construction. Only for simple pictures outside these does a model sketch freehand,
+  labelled "rough sketch" and cleaned with a strict allowlist. In testing, freehand AI drawings of field lines
+  were wrong even from strong models, which is why the physics is drawn by code.
+- **Every class is on record.** Each class is saved as a transcript with the chapter's content version:
+  what the lesson plan asked for (board line and notes), what she actually said, what the student said, and
+  every tool call with its result. On `/staff` you can trace a wrong statement to the notes or to the AI.
 - **Follows your language.** The class starts in English. Each student turn is classified in code
   (English, Hinglish or Hindi), and she switches with you and stays there. Captions are always in Roman script.
 - **Adapts to the grade.** Class 6: short sentences, stories, a slower pace. Class 10: the NCERT
@@ -142,9 +151,9 @@ Handy dev pages: `/dev/room/g6-magnets` walks through every study-room state wit
 
 ```bash
 cd agent
-./dev.sh test     # 84 unit tests: engine, hints, doubt list, class clock, grading, language, every question
-./dev.sh evals    # 15 conversation evals with an LLM judge: faqs, distractors, safety, repeats, grades,
-                  # language following, never giving the answer, parking doubts
+./dev.sh test     # 92 unit tests: engine, hints, doubt list, clock, grading, language, drawing safety, transcripts
+./dev.sh evals    # 16 conversation evals with an LLM judge: faqs, distractors, safety, repeats, grades,
+                  # language following, never giving the answer, parking doubts, drawing on request
 cd ../web && npx tsc --noEmit && npx eslint .
 ```
 
