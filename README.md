@@ -112,63 +112,59 @@ blind listening page so the choice is made by listening, not by spec sheet.
 
 ```mermaid
 flowchart LR
-    student(["Student<br/>phone or laptop"])
+    student(["<b>Student</b><br/>talks to MadamJi like a real<br/>teacher, on phone or laptop"])
 
-    subgraph web["Next.js app on Vercel"]
-        direction TB
-        ui["Classroom<br/>chalkboard · questions<br/>timer · doubt list · captions"]
-        api["API routes<br/>class token · progress · events"]
-        staff["Staff dashboard<br/>safety alerts · transcripts"]
-        ui -- "② asks for a class" --> api
-        staff -- "⑦ watches alerts" --> api
+    subgraph app["The classroom on screen"]
+        screen["<b>What the student sees</b><br/>chalkboard, practice questions,<br/>timer, doubt list and live captions,<br/>all updating as she teaches<br/><br/><small>website · Next.js on Vercel</small>"]
     end
 
-    room(["LiveKit Cloud room<br/>live audio + class state"])
+    voiceline(["<b>Live voice connection</b><br/>works like a phone call,<br/>so she can be interrupted<br/><br/><small>LiveKit</small>"])
 
-    subgraph agent["Teacher agent · LiveKit Agents · India South"]
-        direction TB
-        ears["Listen<br/>noise cancel · turn detector<br/>Sarvam saaras:v4"]
-        content[("Chapters<br/>NCERT notes · questions · FAQs")]
-        engine["Lesson engine<br/>parts · hints · doubts · clock"]
-        brain["Think<br/>gpt-4.1-mini · Gemini fallback"]
-        tools["Tools<br/>grade · search notes · draw<br/>remember · park doubt · alert"]
-        voice["Speak<br/>ElevenLabs v4 Turbo<br/>+ pronunciation glossary"]
-        content --> engine
-        engine -- "what to teach next" --> brain
-        ears -- "student's words" --> brain
-        brain <--> tools
-        brain -- "streams reply" --> voice
+    subgraph teacher["MadamJi, the AI teacher"]
+        direction LR
+        hear["<b>1 · Hears</b><br/>turns the student's voice into words,<br/>in English, Hinglish or Hindi<br/><br/><small>Sarvam, built for Indian speech</small>"]
+        plan["<b>Lesson plan</b><br/>our own NCERT-based chapters:<br/>what to teach, which questions,<br/>when to take doubts<br/><br/><small>written and checked by us</small>"]
+        think["<b>2 · Thinks</b><br/>decides what a good teacher says next:<br/>explains, asks, gives hints,<br/>never just gives the answer<br/><br/><small>GPT-4.1 mini, Gemini as backup</small>"]
+        skills["<b>Can also</b><br/>check answers · look up notes<br/>draw on the board · remember the student<br/>notice unsafe talk<br/><br/><small>tools she calls herself</small>"]
+        speak["<b>3 · Speaks</b><br/>warm Indian-accent voice,<br/>starts talking in about a second<br/><br/><small>ElevenLabs</small>"]
+        hear --> think
+        plan --> think
+        think <--> skills
+        think --> speak
     end
 
-    db[("Supabase<br/>students · progress<br/>alerts · transcripts")]
+    memory[("<b>Memory</b><br/>the student's name, scores<br/>and where they left off<br/><br/><small>Supabase database</small>")]
 
-    student -- "① picks a chapter" --> web
-    web -- "③ loads memory" --> db
-    web <== "④ voice + taps" ==> room
-    room <== "⑤ voice + board state" ==> agent
-    agent -. "⑥ progress · alerts · transcripts" .-> db
+    student <== "voice and taps" ==> app
+    app <== "live audio" ==> voiceline
+    voiceline <== "her voice and<br/>what to show on the board" ==> teacher
+    teacher <-- "remembers each student<br/>between classes" --> memory
 
+    classDef person fill:#fde6e1,stroke:#ff7a59,stroke-width:2px,color:#2b2118
     classDef web fill:#fff6e8,stroke:#dc8a0b,stroke-width:2px,color:#2b2118
-    classDef lk fill:#e8f1fb,stroke:#4c9be8,stroke-width:2px,color:#2b2118
+    classDef conn fill:#e8f1fb,stroke:#4c9be8,stroke-width:2px,color:#2b2118
     classDef ai fill:#e9f5ec,stroke:#3f8f5a,stroke-width:2px,color:#2b2118
     classDef store fill:#f3ecfb,stroke:#8e5bd8,stroke-width:2px,color:#2b2118
-    classDef person fill:#fde6e1,stroke:#ff7a59,stroke-width:2px,color:#2b2118
-    class ui,api,staff web
-    class room lk
-    class ears,brain,voice,engine,tools ai
-    class db,content store
     class student person
+    class screen web
+    class voiceline conn
+    class hear,think,speak,skills ai
+    class plan,memory store
 ```
 
-1. The student picks a chapter and a class length (15 or 25 minutes).
-2. The app hands out a short-lived LiveKit token. The student's name, chapter and class length travel with it.
-3. Before saying hello, the teacher loads what she remembers about this student: past scores and facts like their name and favourite topic.
-4. The browser and the room stream the student's voice and taps (answers, raise hand, pause) in real time.
-5. The agent listens, thinks and speaks in one streaming loop. The lesson engine decides what comes next
-   from our own chapter content, and the model turns it into a natural spoken class. Board lines,
-   questions, hints, the timer and drawings go back to the screen as class state.
-6. Progress, safety alerts and the full transcript (tagged with the chapter version) are saved to Supabase through the app's API.
-7. Staff see safety alerts on the dashboard straight away, with a sound ping, and can read any class transcript.
+**How a class works, in plain words**
+
+1. The student picks a chapter and a 15 or 25 minute class. MadamJi greets them by name and picks up from last time.
+2. She teaches from our own chapter plan, one small point at a time, writing it on the chalkboard as she speaks.
+3. The student can talk at any moment. She stops, listens, answers the doubt, and carries on from the same point.
+   If there are too many doubts, she puts them on a doubt list and answers them before the class ends.
+4. After each part she asks a practice question. If the answer is wrong she gives a hint, never the answer.
+5. She speaks the way the student speaks: English, Hinglish or Hindi, and switches when they do.
+6. The whole loop of hear, think and speak streams, so her reply starts in about a second, like a real conversation.
+7. Scores and progress are saved, so the next class starts where this one ended. If a child says something
+   worrying, she responds gently and the team is alerted.
+
+**Under the hood**
 
 - **Turn taking:** voice activity detection, LiveKit's multilingual end-of-turn model, and adaptive
   interruption that ignores "hmm" and coughs. She waits longer while a question is open, because kids
