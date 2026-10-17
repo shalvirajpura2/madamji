@@ -51,6 +51,7 @@ export function QuestionCard({ question, state, pending, onAnswer }: Props) {
   return (
     <div
       ref={ref}
+      data-tour="question"
       key={`${question.id}-${state.status}`}
       className={`paper-card relative rounded-3xl p-5 sm:p-6 ${state.status === "retry" ? "animate-[wiggle_0.4s_ease-in-out_2]" : "animate-rise"}`}
     >

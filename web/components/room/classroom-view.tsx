@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoMark } from "@/components/logo";
 import { Teacher, type TeacherPose } from "@/components/teacher";
 import type { Chapter } from "@/lib/content";
 import type { LessonState, Mood } from "@/lib/lesson";
@@ -30,6 +31,7 @@ export type ClassroomViewProps = {
   onToggleMic: () => void;
   onSendText: (text: string) => void;
   onLeave: () => void;
+  onHelp?: () => void;
 };
 
 export function ClassroomView(p: ClassroomViewProps) {
@@ -43,17 +45,28 @@ export function ClassroomView(p: ClassroomViewProps) {
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-3 py-3 sm:px-5 sm:py-4">
       <header className="flex flex-wrap items-center gap-3">
+        <LogoMark className="hidden h-10 w-10 sm:inline-flex" />
         <button
           onClick={p.onLeave}
           className="rounded-2xl border-2 border-line bg-white px-3 py-2 font-bold transition hover:border-coral"
         >
           ← Leave
         </button>
+        {p.onHelp && (
+          <button
+            onClick={p.onHelp}
+            aria-label="How does this classroom work?"
+            title="Take the tour"
+            className="order-last flex h-10 w-10 items-center justify-center rounded-full border-2 border-line bg-white text-lg font-extrabold transition hover:border-marigold sm:order-none"
+          >
+            ?
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-ink-soft">Class {chapter.grade} · Science</p>
           <h1 className="truncate text-xl font-extrabold sm:text-2xl">{chapter.title}</h1>
         </div>
-        <ol className="flex items-center gap-1.5" aria-label="Chapter parts">
+        <ol className="flex items-center gap-1.5" aria-label="Chapter parts" data-tour="parts">
           {chapter.sections.map((s, i) => {
             const current = lesson && i === lesson.section && !["intro", "wrap", "doubts"].includes(lesson.phase);
             const finished = i < done;
@@ -86,7 +99,7 @@ export function ClassroomView(p: ClassroomViewProps) {
 
       <div className="grid flex-1 gap-4 lg:grid-cols-[1fr_300px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <div className={`relative ${question ? "flex-none" : "min-h-[340px] flex-1"}`}>
+          <div className={`relative ${question ? "flex-none" : "min-h-[340px] flex-1"}`} data-tour="board">
             <Board chapter={chapter} lesson={lesson} compact={Boolean(question)} />
             {paused && (
               <div className="absolute inset-0 z-30 flex items-center justify-center rounded-sm bg-ink/55">
@@ -144,7 +157,7 @@ export function ClassroomView(p: ClassroomViewProps) {
         </div>
 
         <aside className="order-first flex flex-col gap-3 lg:order-none">
-          <div className="paper-card flex items-center gap-3 rounded-3xl p-3 lg:flex-col lg:items-center lg:p-4">
+          <div className="paper-card flex items-center gap-3 rounded-3xl p-3 lg:flex-col lg:items-center lg:p-4" data-tour="teacher">
             <Teacher
               pose={p.teacher.pose}
               mood={p.teacher.mood}
@@ -157,7 +170,7 @@ export function ClassroomView(p: ClassroomViewProps) {
               <Captions text={p.captions.teacher} className="max-h-[4.6rem] text-[15px] leading-snug font-medium lg:hidden" />
             </div>
           </div>
-          <div className="paper-card hidden min-h-28 flex-col gap-2 rounded-3xl p-4 lg:flex" aria-live="polite">
+          <div className="paper-card hidden min-h-28 flex-col gap-2 rounded-3xl p-4 lg:flex" aria-live="polite" data-tour="captions">
             <p className="text-xs font-bold tracking-wide text-ink-soft uppercase">Ma&apos;am is saying</p>
             <Captions text={p.captions.teacher} className="max-h-40 text-[15px] leading-snug font-medium" />
             {p.captions.student && (
@@ -171,8 +184,10 @@ export function ClassroomView(p: ClassroomViewProps) {
         </aside>
       </div>
 
-      <footer className="sticky bottom-0 -mx-3 flex flex-col gap-3 border-t-2 border-line bg-paper/95 px-3 py-3 backdrop-blur sm:-mx-5 sm:px-5">
-        <StatusPill tone={p.status.tone} text={p.status.text} />
+      <footer className="sticky bottom-0 -mx-3 flex flex-col gap-3 border-t-2 border-line bg-paper px-3 py-3 shadow-[0_-8px_20px_-14px_rgb(80_50_20_/_0.35)] sm:-mx-5 sm:px-5">
+        <div data-tour="status">
+          <StatusPill tone={p.status.tone} text={p.status.text} />
+        </div>
         <Controls
           micOn={p.micOn}
           paused={paused}

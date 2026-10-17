@@ -8,6 +8,7 @@ type Props = {
   level?: number; // voice loudness 0..1, opens the mouth while speaking
   className?: string;
   wave?: boolean;
+  headOnly?: boolean; // just her face, used for the MadamJi logo
 };
 
 const SKIN = "#c98e60";
@@ -58,7 +59,7 @@ function Mouth({ mood, pose, level }: { mood: Mood; pose: TeacherPose; level: nu
   return <path d="M88 118 Q100 127 112 118" stroke="#6e2424" strokeWidth="2.8" fill="none" strokeLinecap="round" />;
 }
 
-export function Teacher({ mood = "calm", pose = "idle", level = 0, className = "", wave = false }: Props) {
+export function Teacher({ mood = "calm", pose = "idle", level = 0, className = "", wave = false, headOnly = false }: Props) {
   const [leftBrow, rightBrow] = brows(mood);
   const lookUp = pose === "thinking" ? -2 : 0;
   const tilt = pose === "listening" ? -5 : pose === "thinking" ? 4 : 0;
@@ -66,7 +67,12 @@ export function Teacher({ mood = "calm", pose = "idle", level = 0, className = "
   const blush = mood === "happy" || mood === "proud" ? 0.55 : 0.28;
 
   return (
-    <svg viewBox="0 0 200 260" className={className} role="img" aria-label={`Meera Ma'am, ${pose}`}>
+    <svg
+      viewBox={headOnly ? "46 14 108 132" : "0 0 200 260"}
+      className={className}
+      role="img"
+      aria-label={headOnly ? "MadamJi" : `Meera Ma'am, ${pose}`}
+    >
       {/* raised arm with chalk, drawn behind the body */}
       <g
         style={{

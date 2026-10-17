@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Logo } from "@/components/logo";
 import { Teacher } from "@/components/teacher";
 import { clearStudent, newStudentId, saveStudent, useStudent } from "@/lib/student";
 
@@ -36,9 +37,12 @@ export function Welcome() {
   return (
     <div className="grid w-full max-w-5xl items-center gap-8 md:grid-cols-[1fr_1.1fr]">
       <section className="flex flex-col items-center text-center md:items-start md:text-left">
-        <p className="mb-2 rounded-full bg-marigold/15 px-3 py-1 text-sm font-semibold text-marigold-deep">
-          MadamJi · voice science class
-        </p>
+        <div className="mb-4 flex flex-col items-center gap-2 md:items-start">
+          <Logo size="lg" href={null} />
+          <p className="rounded-full bg-marigold/15 px-3 py-1 text-sm font-semibold text-marigold-deep">
+            Your voice science class · Class 6 &amp; 10
+          </p>
+        </div>
         <h1 className="text-4xl leading-tight font-extrabold sm:text-5xl">
           Learn science by <span className="text-leaf">talking</span> to your teacher
         </h1>

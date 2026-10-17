@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChapterArt } from "@/components/chapter-art";
+import { Logo } from "@/components/logo";
 import { Teacher } from "@/components/teacher";
 import type { Chapter } from "@/lib/content";
 import type { ProgressRecord } from "@/lib/store/types";
@@ -39,6 +40,7 @@ export function ChapterList({ chapters }: { chapters: Chapter[] }) {
 
   return (
     <div className="flex flex-col gap-8">
+      <Logo />
       <header className="flex flex-wrap items-center gap-4">
         <Teacher pose="idle" mood="happy" className="h-24 w-20" />
         <div className="flex-1">

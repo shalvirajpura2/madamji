@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ClassTranscripts } from "@/components/class-transcripts";
+import { Logo } from "@/components/logo";
 import type { AlertRecord } from "@/lib/store/types";
 
 const POLL_MS = 4000;
@@ -78,7 +79,8 @@ export function StaffAlerts() {
           setActive(passcode);
         }}
       >
-        <h1 className="text-2xl font-extrabold">Safety alerts</h1>
+        <Logo href={null} />
+        <h1 className="text-2xl font-extrabold">Staff dashboard</h1>
         <p className="text-ink-soft">For the MadamJi care team only.</p>
         <input
           type="password"

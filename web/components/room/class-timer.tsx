@@ -38,6 +38,7 @@ export function ClassTimer({
   return (
     <div
       role="timer"
+      data-tour="timer"
       aria-label={`${mm} minutes ${ss} seconds left in this ${minutes} minute class`}
       className={`flex items-center gap-2 rounded-full border-2 border-line px-3 py-1.5 font-extrabold tabular-nums ${tone}`}
       title={`${minutes}-minute class`}

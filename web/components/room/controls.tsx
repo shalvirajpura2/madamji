@@ -77,6 +77,7 @@ export function Controls(p: ControlsProps) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={p.onToggleMic}
+          data-tour="mic"
           disabled={p.disabled || p.paused}
           aria-pressed={p.micOn}
           className={`relative flex items-center gap-2 rounded-2xl border-2 px-3.5 py-2.5 font-bold transition active:translate-y-0.5 disabled:opacity-40 sm:px-4 ${
@@ -90,7 +91,7 @@ export function Controls(p: ControlsProps) {
           <span className="hidden sm:inline">{p.micOn ? "Mic on" : "Mic off"}</span>
           {p.micOn && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-chalk-green ring-2 ring-white" aria-hidden />}
         </button>
-        <button onClick={p.onRaiseHand} disabled={p.disabled || p.paused} className={btn}>
+        <button onClick={p.onRaiseHand} disabled={p.disabled || p.paused} className={btn} data-tour="hand">
           <span aria-hidden>✋</span> Raise hand
         </button>
         {p.paused ? (
@@ -102,16 +103,22 @@ export function Controls(p: ControlsProps) {
             <span aria-hidden>▶</span> Resume
           </button>
         ) : (
-          <button onClick={p.onPause} disabled={p.disabled} className={btn}>
+          <button onClick={p.onPause} disabled={p.disabled} className={btn} data-tour="pause">
             <span aria-hidden>⏸</span> <span className="hidden sm:inline">Pause</span>
           </button>
         )}
-        <button onClick={() => setTyping((t) => !t)} disabled={p.disabled || p.paused} className={btn} aria-pressed={typing}>
+        <button
+          onClick={() => setTyping((t) => !t)}
+          disabled={p.disabled || p.paused}
+          className={btn}
+          aria-pressed={typing}
+          data-tour="type"
+        >
           <span aria-hidden>⌨️</span> <span className="hidden sm:inline">Type</span>
         </button>
         <div className="ml-auto flex gap-2">
           {p.phase === "question" && (
-            <button onClick={p.onHint} disabled={p.disabled || p.paused} className={btn}>
+            <button onClick={p.onHint} disabled={p.disabled || p.paused} className={btn} data-tour="hint">
               <span aria-hidden>💡</span> Hint
             </button>
           )}

@@ -6,6 +6,7 @@ const repoRoot = path.join(__dirname, "..");
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  devIndicators: false,
   partialPrefetching: true,
   outputFileTracingRoot: repoRoot,
   turbopack: {

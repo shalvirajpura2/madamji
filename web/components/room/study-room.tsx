@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ConnectionState, TokenSource } from "livekit-client";
 import { RoomAudioRenderer, SessionProvider, useSession } from "@livekit/components-react";
+import { Logo } from "@/components/logo";
 import { Teacher } from "@/components/teacher";
 import type { Chapter } from "@/lib/content";
 import { useStudent } from "@/lib/student";
 import { LiveClassroom } from "./live-classroom";
+import { Tour, tourSeen } from "./tour";
 
 const AGENT_NAME = process.env.NEXT_PUBLIC_AGENT_NAME || "ustaad-teacher";
 
@@ -68,6 +70,7 @@ function Session({
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [touring, setTouring] = useState(() => !tourSeen());
   const router = useRouter();
 
   async function checkMic(): Promise<MicCheck> {
@@ -129,8 +132,10 @@ function Session({
   if (leaving) return <p className="m-auto text-ink-soft">See you soon! 👋</p>;
 
   if (!joined || dropped) {
+    if (touring) return <Tour chapter={chapter} onClose={() => setTouring(false)} />;
     return (
       <Lobby
+        onTour={() => setTouring(true)}
         chapter={chapter}
         studentName={student.name}
         mic={mic}
@@ -167,9 +172,13 @@ function Lobby(p: {
   onEnterWithoutMic: () => void;
   minutes: ClassLength;
   onMinutes: (minutes: ClassLength) => void;
+  onTour: () => void;
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-6 px-4 py-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:py-10">
+      <div className="self-start">
+        <Logo />
+      </div>
       <div className="flex w-full flex-col items-center gap-6 md:flex-row md:items-end">
         <Teacher pose="idle" mood="happy" wave className="h-56 w-44 shrink-0 animate-float" />
         <div className="paper-card w-full flex-1 rounded-3xl p-6 sm:p-8 animate-rise">
@@ -241,6 +250,9 @@ function Lobby(p: {
                 Join with typing only
               </button>
             )}
+            <button onClick={p.onTour} className="font-semibold text-ink-soft underline underline-offset-4">
+              First time? Take the 30-second tour
+            </button>
             <Link href="/learn" className="ml-auto font-semibold text-ink-soft underline underline-offset-4">
               Back to chapters
             </Link>

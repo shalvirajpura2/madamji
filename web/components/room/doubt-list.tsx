@@ -3,7 +3,7 @@
 export function DoubtList({ doubts, current }: { doubts?: { text: string; answered: boolean }[]; current?: number }) {
   if (!doubts?.length) return null;
   return (
-    <div className="paper-card flex flex-col gap-2 rounded-3xl p-4 animate-rise">
+    <div className="paper-card flex flex-col gap-2 rounded-3xl p-4 animate-rise" data-tour="doubts">
       <p className="flex items-center justify-between text-xs font-bold tracking-wide text-ink-soft uppercase">
         <span>📌 Doubt list</span>
         <span>

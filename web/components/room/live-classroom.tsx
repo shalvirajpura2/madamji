@@ -14,6 +14,7 @@ import type { TeacherPose } from "@/components/teacher";
 import type { Chapter } from "@/lib/content";
 import { parseLesson } from "@/lib/lesson";
 import { ClassroomView } from "./classroom-view";
+import { Tour } from "./tour";
 import type { StatusTone } from "./controls";
 
 type Props = { chapter: Chapter; nextChapter: { id: string; title: string } | null; onLeave: () => void };
@@ -28,6 +29,8 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const micBeforePause = useRef(false);
+  const [touring, setTouring] = useState(false);
+  const pausedForTour = useRef(false);
 
   const lesson = useMemo(() => parseLesson(agent.attributes?.lesson), [agent.attributes]);
 
@@ -107,8 +110,42 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
     banner = "Your internet dropped for a moment. Reconnecting…";
   }
 
+  async function pause() {
+    // a real pause: Ma'am stops and the mic goes off until resume
+    micBeforePause.current = isMicrophoneEnabled;
+    if (isMicrophoneEnabled) await localParticipant.setMicrophoneEnabled(false).catch(() => {});
+    await call("pause");
+  }
+
+  async function resume() {
+    if (micBeforePause.current) await localParticipant.setMicrophoneEnabled(true).catch(() => {});
+    await call("resume");
+  }
+
+  if (touring) {
+    return (
+      <Tour
+        chapter={chapter}
+        onClose={() => {
+          setTouring(false);
+          if (pausedForTour.current) {
+            pausedForTour.current = false;
+            void resume();
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <ClassroomView
+      onHelp={() => {
+        if (!lesson?.pausedAt) {
+          pausedForTour.current = true;
+          void pause();
+        }
+        setTouring(true);
+      }}
       chapter={chapter}
       lesson={lesson}
       teacher={{ pose, mood: lesson?.mood ?? "calm", level: pose === "speaking" ? level : 0 }}
@@ -125,16 +162,8 @@ export function LiveClassroom({ chapter, nextChapter, onLeave }: Props) {
         if (!res) setPending(false);
       }}
       onRaiseHand={() => call("raise_hand")}
-      onPause={async () => {
-        // a real pause: Ma'am stops and the mic goes off until resume
-        micBeforePause.current = isMicrophoneEnabled;
-        if (isMicrophoneEnabled) await localParticipant.setMicrophoneEnabled(false).catch(() => {});
-        await call("pause");
-      }}
-      onResume={async () => {
-        if (micBeforePause.current) await localParticipant.setMicrophoneEnabled(true).catch(() => {});
-        await call("resume");
-      }}
+      onPause={pause}
+      onResume={resume}
       onContinue={() => call("continue")}
       onHint={() => sendText("Ma'am, can I get a hint please?")}
       onToggleMic={() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled).catch(() => {
