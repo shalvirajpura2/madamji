@@ -15,7 +15,9 @@ from . import backend, grading, language, notes, prompts
 from .content import Question
 from .language import ENGLISH
 from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
+from .config import settings
 from .models import ask_json
+from .transcript import Transcript
 from .prompts import Student
 from .safety import Monitor
 from .teacher import Teacher
@@ -39,6 +41,19 @@ class Classroom:
         self.tts = tts
         self.monitor = Monitor({"id": student.id, "name": student.name}, lesson.chapter.id)
         self.language = ENGLISH  # until the student shows otherwise
+        self.transcript = Transcript(
+            room=getattr(ctx.room, "name", "local") or "local",
+            student={"id": student.id, "name": student.name, "grade": student.grade},
+            chapter=lesson.chapter,
+            minutes=minutes,
+            models={
+                "llm": settings.llm_model,
+                "llmFallback": settings.llm_fallback,
+                "tts": settings.tts_provider,
+                "voice": settings.eleven_voice if settings.tts_provider == "elevenlabs" else settings.tts_speaker,
+                "stt": settings.stt_model,
+            },
+        )
         self.teacher = Teacher(self, self._instructions())
         self.mood = "calm"
         self._steps: dict[str, Step] = {}
@@ -69,6 +84,8 @@ class Classroom:
         self.session.on("user_input_transcribed", self._on_transcript)
         self.session.on("error", self._on_error)
         self.session.on("close", self._on_close)
+        self.session.on("conversation_item_added", self._on_item)
+        self.session.on("function_tools_executed", self._on_tools)
         self.ctx.add_shutdown_callback(self._shutdown)
 
         self.ends_at = time.time() + self.minutes * 60
@@ -87,6 +104,7 @@ class Classroom:
         if found is None or found == self.language:
             return False
         logger.info("class language: %s -> %s", self.language, found)
+        self.transcript.event("language", language=found)
         self.language = found
         return True
 
@@ -115,6 +133,7 @@ class Classroom:
         self._voice_for(step)
         await self._trim_history()
         await self._refresh()
+        self.transcript.step(step, self.lesson)
         handle = self.session.generate_reply(
             instructions=lead + prompts.step(step, self.lesson, self.student),
             tool_choice="none",
@@ -123,6 +142,7 @@ class Classroom:
         self._save_if_progressed()
 
     async def _tool_step(self, ctx: RunContext, step: Step) -> str:
+        self.transcript.step(step, self.lesson)
         self._voice_for(step)
         await self._refresh()
         self._track(ctx.speech_handle, step)
@@ -231,6 +251,7 @@ class Classroom:
             reserve = 90 + 60 * min(self.lesson.doubts_left, 3)  # wrap-up plus about a minute per parked doubt
             if not self.lesson.out_of_time and left <= reserve + 120:
                 logger.info("class clock: %.0fs left, no new parts from here", left)
+                self.transcript.event("time_running_low", secondsLeft=int(left))
                 self.lesson.out_of_time = True
                 await self._refresh()
             busy = self.session.agent_state in ("speaking", "thinking") or self.session.user_state == "speaking"
@@ -307,6 +328,7 @@ class Classroom:
 
     def tool_alert(self, severity: str, category: str, summary: str) -> str:
         self.monitor.raise_alert(severity, category, summary, quote=self._last_said)
+        self.transcript.event("safety_alert", severity=severity, category=category)
         self.lesson.paused = True
         self.mood = "concerned"
         asyncio.create_task(self._refresh())
@@ -355,6 +377,16 @@ class Classroom:
         if self.lesson.phase in (TEACH, CHECK) and len(self._doubts) < 5 and len(text.split()) > 3:
             self._doubts.append(text[:100])
 
+    def _on_item(self, ev) -> None:
+        item = ev.item
+        role = getattr(item, "role", None)
+        if role in ("user", "assistant"):
+            self.transcript.message(role, item.text_content or "", interrupted=getattr(item, "interrupted", False))
+
+    def _on_tools(self, ev) -> None:
+        for call, out in zip(ev.function_calls, ev.function_call_outputs):
+            self.transcript.tool(call.name, call.arguments, getattr(out, "output", "") if out else "")
+
     def _on_error(self, ev) -> None:
         recoverable = getattr(ev.error, "recoverable", True)
         logger.error("session error (recoverable=%s): %s", recoverable, ev.error)
@@ -368,6 +400,7 @@ class Classroom:
         logger.error("class ended by an error: %s", ev.error)
         self._closing = True
         self._save()
+        self._save_transcript(error=str(ev.error)[:300])
 
         async def end() -> None:
             await self.publish(status="ended")
@@ -426,6 +459,7 @@ class Classroom:
         self.lesson.mark_interrupted()
         self.lesson.paused = True
         self.session.input.set_audio_enabled(False)
+        self.transcript.event("pause")
         self.mood = "calm"
         await self._refresh()
         return "ok"
@@ -435,6 +469,7 @@ class Classroom:
             return "ok"
         self.ends_at += time.time() - self._paused_at
         self._paused_at = 0.0
+        self.transcript.event("resume")
         self.session.input.set_audio_enabled(True)
         self.lesson.paused = False
         if self.lesson.phase == QUESTION:
@@ -501,4 +536,18 @@ class Classroom:
             self._clock.cancel()
         if self.lesson.phase != INTRO or self.lesson.results:
             self._save()
+        self._save_transcript()
         await backend.flush()
+
+    def _save_transcript(self, error: str = "") -> None:
+        correct, attempted = self.lesson.score()
+        self.transcript.save({
+            "sectionsDone": self.lesson.sections_done,
+            "sections": len(self.lesson.chapter.sections),
+            "completed": self.lesson.done,
+            "firstTryCorrect": correct,
+            "questions": attempted,
+            "doubts": [{"text": d.text, "answered": d.answered} for d in self.lesson.doubts],
+            "language": self.language,
+            "error": error,
+        })

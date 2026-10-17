@@ -35,7 +35,18 @@ create table if not exists alerts (
   source text not null default 'teacher'
 );
 
+-- one row per class: what the engine asked for, what the teacher said, tools and results
+create table if not exists transcripts (
+  id text primary key,
+  student_id text,
+  chapter_id text,
+  chapter_version text,
+  started_at timestamptz not null default now(),
+  data jsonb not null
+);
+
 -- the app only uses the service role key on the server, so lock tables to everyone else
 alter table students enable row level security;
 alter table progress enable row level security;
 alter table alerts enable row level security;
+alter table transcripts enable row level security;

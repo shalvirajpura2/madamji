@@ -37,6 +37,10 @@ export async function POST(req: Request) {
         quote: String(e.quote ?? ""),
         source: String(e.source ?? "teacher"),
       });
+    } else if (e.type === "transcript") {
+      const { type: _type, ...record } = e;
+      void _type;
+      await store.saveTranscript(record);
     } else {
       return NextResponse.json({ error: "unknown event" }, { status: 400 });
     }

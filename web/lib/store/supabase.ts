@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { mergeFacts, mergeProgress, type AlertRecord, type ProgressRecord, type Store } from "./types";
+import { mergeFacts, mergeProgress, type AlertRecord, type ProgressRecord, type Store, type TranscriptRecord } from "./types";
 
 // tables are created by web/supabase/schema.sql; only the server talks to supabase
 
@@ -97,6 +97,34 @@ export const supabaseStore: Store = {
       source: a.source,
     });
     fail(error);
+  },
+  async saveTranscript(record) {
+    const { error } = await db().from("transcripts").upsert({
+      id: record.id,
+      student_id: record.studentId,
+      chapter_id: record.chapterId,
+      chapter_version: record.chapterVersion,
+      started_at: new Date(record.startedAt).toISOString(),
+      data: record,
+    });
+    fail(error);
+  },
+  async listTranscripts(limit = 50) {
+    const { data, error } = await db()
+      .from("transcripts")
+      .select("data")
+      .order("started_at", { ascending: false })
+      .limit(limit);
+    fail(error);
+    return (data ?? []).map((row) => {
+      const { entries, ...summary } = row.data as TranscriptRecord;
+      return { ...summary, turns: entries.length };
+    });
+  },
+  async getTranscript(id) {
+    const { data, error } = await db().from("transcripts").select("data").eq("id", id).maybeSingle();
+    fail(error);
+    return (data?.data as TranscriptRecord) ?? null;
   },
   async listAlerts(limit = 100) {
     const { data, error } = await db().from("alerts").select("*").order("id", { ascending: false }).limit(limit);

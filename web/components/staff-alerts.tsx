@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ClassTranscripts } from "@/components/class-transcripts";
 import type { AlertRecord } from "@/lib/store/types";
 
 const POLL_MS = 4000;
@@ -28,6 +29,7 @@ export function StaffAlerts() {
   const [alerts, setAlerts] = useState<AlertRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fresh, setFresh] = useState<Set<number>>(new Set());
+  const [tab, setTab] = useState<"alerts" | "classes">("alerts");
   const audio = useRef<AudioContext | null>(null);
   const seen = useRef<number | null>(null);
 
@@ -95,7 +97,17 @@ export function StaffAlerts() {
   return (
     <>
       <header className="flex flex-wrap items-center gap-3">
-        <h1 className="flex-1 text-3xl font-extrabold">Safety alerts</h1>
+        <div className="flex flex-1 gap-1 rounded-full border-2 border-line bg-white p-1">
+          {(["alerts", "classes"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`rounded-full px-4 py-1.5 font-bold ${tab === t ? "bg-ink text-paper" : "text-ink-soft"}`}
+            >
+              {t === "alerts" ? `Safety alerts${alerts.length ? ` (${alerts.length})` : ""}` : "Class transcripts"}
+            </button>
+          ))}
+        </div>
         <span className="flex items-center gap-2 rounded-full bg-leaf/15 px-3 py-1.5 text-sm font-bold text-leaf">
           <span className="h-2 w-2 animate-pulse rounded-full bg-leaf" /> Live · sound on
         </span>
@@ -107,49 +119,55 @@ export function StaffAlerts() {
         </button>
       </header>
 
-      {error && (
-        <p role="alert" className="rounded-2xl border-2 border-coral/40 bg-coral/10 p-4 font-semibold">
-          {error}
-          {error === "Wrong passcode" && (
-            <button className="ml-3 underline" onClick={() => setActive(null)}>
-              Try again
-            </button>
-          )}
-        </p>
+      {tab === "classes" ? (
+        <ClassTranscripts passcode={active} />
+      ) : (
+        <>
+        {error && (
+          <p role="alert" className="rounded-2xl border-2 border-coral/40 bg-coral/10 p-4 font-semibold">
+            {error}
+            {error === "Wrong passcode" && (
+              <button className="ml-3 underline" onClick={() => setActive(null)}>
+                Try again
+              </button>
+            )}
+          </p>
+        )}
+  
+        {!error && alerts.length === 0 && (
+          <p className="paper-card rounded-3xl p-6 text-lg text-ink-soft">No alerts. All classes are calm. 🌿</p>
+        )}
+  
+        <ul className="flex flex-col gap-3">
+          {alerts.map((a) => (
+            <li
+              key={a.id}
+              onClick={() => setFresh((f) => new Set([...f].filter((id) => id !== a.id)))}
+              className={`paper-card rounded-3xl border-l-8 p-5 ${a.severity === "high" ? "border-l-coral" : "border-l-marigold"} ${
+                fresh.has(a.id) ? "ring-4 ring-coral/40 animate-pop" : ""
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase ${
+                    a.severity === "high" ? "bg-coral text-white" : "bg-marigold text-ink"
+                  }`}
+                >
+                  {a.severity}
+                </span>
+                <span className="font-bold">{a.category || "concern"}</span>
+                <span className="text-sm text-ink-soft">
+                  · {a.studentName || "Unknown student"} · {a.chapterId} · {new Date(a.createdAt).toLocaleString()}
+                </span>
+                <span className="ml-auto text-xs font-semibold text-ink-soft">via {a.source}</span>
+              </div>
+              <p className="mt-2 text-lg">{a.summary}</p>
+              {a.quote && <p className="mt-1 text-ink-soft italic">&ldquo;{a.quote}&rdquo;</p>}
+            </li>
+          ))}
+        </ul>
+        </>
       )}
-
-      {!error && alerts.length === 0 && (
-        <p className="paper-card rounded-3xl p-6 text-lg text-ink-soft">No alerts. All classes are calm. 🌿</p>
-      )}
-
-      <ul className="flex flex-col gap-3">
-        {alerts.map((a) => (
-          <li
-            key={a.id}
-            onClick={() => setFresh((f) => new Set([...f].filter((id) => id !== a.id)))}
-            className={`paper-card rounded-3xl border-l-8 p-5 ${a.severity === "high" ? "border-l-coral" : "border-l-marigold"} ${
-              fresh.has(a.id) ? "ring-4 ring-coral/40 animate-pop" : ""
-            }`}
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase ${
-                  a.severity === "high" ? "bg-coral text-white" : "bg-marigold text-ink"
-                }`}
-              >
-                {a.severity}
-              </span>
-              <span className="font-bold">{a.category || "concern"}</span>
-              <span className="text-sm text-ink-soft">
-                · {a.studentName || "Unknown student"} · {a.chapterId} · {new Date(a.createdAt).toLocaleString()}
-              </span>
-              <span className="ml-auto text-xs font-semibold text-ink-soft">via {a.source}</span>
-            </div>
-            <p className="mt-2 text-lg">{a.summary}</p>
-            {a.quote && <p className="mt-1 text-ink-soft italic">&ldquo;{a.quote}&rdquo;</p>}
-          </li>
-        ))}
-      </ul>
     </>
   );
 }

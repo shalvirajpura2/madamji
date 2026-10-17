@@ -1,3 +1,4 @@
+import hashlib
 import json
 from dataclasses import dataclass, field
 from functools import cache
@@ -67,9 +68,10 @@ class Chapter:
     notes: list[Note]
     keyterms: list[str] = field(default_factory=list)
     icon: str = ""
+    version: str = ""  # fingerprint of the chapter file, so a transcript says exactly what was taught
 
 
-def _chapter(data: dict) -> Chapter:
+def _chapter(data: dict, version: str = "") -> Chapter:
     sections = [
         Section(
             id=s["id"],
@@ -90,6 +92,7 @@ def _chapter(data: dict) -> Chapter:
         notes=[Note(**n) for n in data.get("notes", [])],
         keyterms=data.get("keyterms", []),
         icon=data.get("icon", ""),
+        version=version,
     )
 
 
@@ -101,7 +104,9 @@ def _read(path: Path):
 def chapters() -> dict[str, Chapter]:
     found = {}
     for path in sorted((settings.content_dir / "chapters").glob("*.json")):
-        chapter = _chapter(_read(path))
+        raw = path.read_bytes()
+        version = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()[:12]
+        chapter = _chapter(json.loads(raw), version)
         found[chapter.id] = chapter
     return found
 

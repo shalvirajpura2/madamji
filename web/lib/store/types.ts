@@ -33,6 +33,33 @@ export type AlertRecord = {
 
 export type NewAlert = Omit<AlertRecord, "id" | "createdAt">;
 
+export type TranscriptEntry = { t: number; kind: "step" | "teacher" | "student" | "tool" | "event" } & Record<string, unknown>;
+
+export type TranscriptRecord = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  grade: number;
+  chapterId: string;
+  chapterTitle: string;
+  chapterVersion: string;
+  minutes: number;
+  startedAt: number;
+  endedAt: number;
+  sectionsDone: number;
+  sections: number;
+  error?: string;
+  models?: Record<string, string>;
+  completed?: boolean;
+  firstTryCorrect?: number;
+  questions?: number;
+  language?: string;
+  doubts?: { text: string; answered: boolean }[];
+  entries: TranscriptEntry[];
+};
+
+export type TranscriptSummary = Omit<TranscriptRecord, "entries"> & { turns?: number };
+
 export interface Store {
   getStudent(id: string): Promise<StudentRecord | null>;
   saveStudent(student: Pick<StudentRecord, "id" | "name" | "grade">): Promise<void>;
@@ -41,6 +68,9 @@ export interface Store {
   saveProgress(progress: Omit<ProgressRecord, "updatedAt">): Promise<void>;
   addAlert(alert: NewAlert): Promise<void>;
   listAlerts(limit?: number): Promise<AlertRecord[]>;
+  saveTranscript(record: TranscriptRecord): Promise<void>;
+  listTranscripts(limit?: number): Promise<TranscriptSummary[]>;
+  getTranscript(id: string): Promise<TranscriptRecord | null>;
 }
 
 export function mergeProgress(

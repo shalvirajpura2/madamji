@@ -1,11 +1,22 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { mergeFacts, mergeProgress, type AlertRecord, type ProgressRecord, type Store, type StudentRecord } from "./types";
+import {
+  mergeFacts,
+  mergeProgress,
+  type AlertRecord,
+  type ProgressRecord,
+  type Store,
+  type StudentRecord,
+  type TranscriptRecord,
+} from "./types";
 
 // local development only: one json file next to the app
 type Data = { students: Record<string, StudentRecord>; progress: ProgressRecord[]; alerts: AlertRecord[] };
 
 const file = path.join(process.cwd(), ".data", "store.json");
+// transcripts are big, so each class gets its own file
+const transcripts = path.join(process.cwd(), ".data", "transcripts");
+const safeId = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, "");
 let queue: Promise<unknown> = Promise.resolve();
 
 async function load(): Promise<Data> {
@@ -62,5 +73,31 @@ export const fileStore: Store = {
   },
   async listAlerts(limit = 100) {
     return (await load()).alerts.slice(-limit).reverse();
+  },
+  async saveTranscript(record) {
+    await mkdir(transcripts, { recursive: true });
+    await writeFile(path.join(transcripts, `${safeId(record.id)}.json`), JSON.stringify(record));
+  },
+  async listTranscripts(limit = 50) {
+    let names: string[] = [];
+    try {
+      names = await readdir(transcripts);
+    } catch {
+      return [];
+    }
+    const all = await Promise.all(
+      names.filter((n) => n.endsWith(".json")).map(async (n) => {
+        const { entries, ...summary } = JSON.parse(await readFile(path.join(transcripts, n), "utf8")) as TranscriptRecord;
+        return { ...summary, turns: entries.length };
+      }),
+    );
+    return all.sort((a, b) => b.startedAt - a.startedAt).slice(0, limit);
+  },
+  async getTranscript(id) {
+    try {
+      return JSON.parse(await readFile(path.join(transcripts, `${safeId(id)}.json`), "utf8")) as TranscriptRecord;
+    } catch {
+      return null;
+    }
   },
 };
