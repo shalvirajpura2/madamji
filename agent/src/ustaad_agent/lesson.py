@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 
 from . import grading
@@ -10,6 +11,20 @@ INTRO, TEACH, CHECK, QUESTION, FEEDBACK, DOUBTS, WRAP, DONE = (
 MAX_HINT = 3
 LIVE_DOUBTS_PER_PART = 2  # more than this and new doubts go on the doubt list
 MAX_PARKED_DOUBTS = 5
+
+# replies that move the class along but are not doubts: "okay", "haan ji", "samajh gaya", "no doubt"
+ACK_WORDS = set(
+    "ok okay okk k kk haan han ha hmm hm hmmm mm yes yeah yep ya yaa ji jee theek thik thick hai h acha accha "
+    "achha acchha samajh samaj samjh gaya gayi gaye aa aaya got it fine sure right cool nice good great thanks "
+    "thank you thankyou no nahi nahin nope doubt doubts koi chalo aage next continue alright go on sounds clear "
+    "understood mam maam ma'am madam madamji please".split()
+)
+
+
+def is_filler(text: str) -> bool:
+    """True for acknowledgements and small talk that should never count as, or be parked as, a doubt."""
+    words = re.findall(r"[a-z']+", text.lower())
+    return not words or all(w in ACK_WORDS for w in words)
 
 
 @dataclass

@@ -14,7 +14,7 @@ from livekit.agents.voice import SpeechHandle
 from . import backend, drawing, grading, language, notes, prompts
 from .content import Question
 from .language import ENGLISH
-from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
+from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step, is_filler
 from .config import settings
 from .models import ask_json
 from .transcript import Transcript
@@ -268,12 +268,13 @@ class Classroom:
                     logger.info("class clock: time is up during %s", self.lesson.phase)
                     await self.run(step, lead="The class time is up, so stop teaching here. ")
 
-    def note_student_turn(self, message_id: str) -> None:
-        """Counts a new student turn during teaching as a live doubt, so the teacher knows when to park."""
+    def note_student_turn(self, message_id: str, text: str) -> None:
+        """Counts a new student turn during teaching as a live doubt, so the teacher knows when to park.
+        Acknowledgements like "okay" or "samajh gaya" are not doubts."""
         if message_id == self._last_user_seen:
             return
         self._last_user_seen = message_id
-        if self.lesson.phase in (TEACH, CHECK):
+        if self.lesson.phase in (TEACH, CHECK) and not is_filler(text):
             self.lesson.note_live_doubt()
 
     @property
@@ -307,6 +308,11 @@ class Classroom:
         return await self._tool_step(ctx, step)
 
     async def tool_park(self, doubt: str) -> str:
+        if is_filler(doubt):
+            return "That is not a doubt, so it was not added. Do not mention the doubt list; just carry on with continue_lesson."
+        if not notes.related(doubt, self.lesson.chapter.id):
+            return ("That is not about this chapter, so it was not added to the doubt list. Gently bring the student "
+                    "back to the lesson in one line and carry on with continue_lesson.")
         number = self.lesson.park(doubt)
         if self.lesson.live_doubts > 0:
             self.lesson.live_doubts -= 1  # parked, not answered live

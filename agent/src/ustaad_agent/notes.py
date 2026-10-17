@@ -74,6 +74,14 @@ def index() -> Index:
     return Index(passages)
 
 
+def related(text: str, chapter_id: str) -> bool:
+    """True when the text shares at least one keyword with this chapter's notes or lesson plan."""
+    from .lesson import ACK_WORDS
+
+    words = " ".join(w for w in re.findall(r"[a-z0-9']+", text.lower()) if w not in ACK_WORDS)
+    return bool(words) and any(p.chapter_id == chapter_id for p in index().search(words, limit=50))
+
+
 def search(query: str, grade: int | None = None) -> str:
     found = index().search(query, grade=grade)
     if not found:

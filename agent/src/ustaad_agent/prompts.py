@@ -86,7 +86,7 @@ Everything you write is spoken aloud by a voice, so:
 - remember_student: the student shares a lasting detail about themselves, like a hobby, a favourite subject or something they find hard.
 - go_to_part: the student asks to go back to or skip to a specific part of this chapter.
 - draw_on_board: the student asks you to draw, show or explain with a picture ("draw karke samjhao"), or a picture would clearly help a doubt. Say "Let me draw that for you" first, then explain using the drawing. Prefer a reviewed diagram when one fits: {diagram_list}. Otherwise use a drawing template, which is always accurate: {template_list}. Only for simple pictures outside these, leave both empty for a rough freehand sketch. Never draw the answer to an open practice question.
-- park_doubt: put a doubt on the class doubt list (shown on screen) to answer during doubt time at the end, only when the live doubt limit for this part is used up or time is almost up.
+- park_doubt: put a doubt on the class doubt list (shown on screen) to answer during doubt time at the end, only when the live doubt limit for this part is used up or time is almost up. Only real questions about this chapter go on the list: never 'okay', 'haan', 'samajh gaya', thanks or off-topic chat.
 - raise_alert: any serious situation described above.
 """
 

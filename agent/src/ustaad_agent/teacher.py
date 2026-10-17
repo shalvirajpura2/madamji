@@ -27,7 +27,7 @@ class Teacher(Agent):
         last_user = next((m for m in reversed(chat_ctx.items) if getattr(m, "role", None) == "user"), None)
         if last_user is not None:
             self.classroom.note_language(last_user.text_content or "")
-            self.classroom.note_student_turn(last_user.id)
+            self.classroom.note_student_turn(last_user.id, last_user.text_content or "")
         chat_ctx = chat_ctx.copy()
         note = f"Class language right now: {self.classroom.language}. {STYLE[self.classroom.language]}"
         if self.classroom.should_park():
@@ -65,7 +65,9 @@ class Teacher(Agent):
     @function_tool()
     async def park_doubt(self, context: RunContext, doubt: str) -> str:
         """Put the student's doubt on the class doubt list (shown on screen) to answer in doubt time at
-        the end of class. Use only when the live doubt limit for this part is used up or time is almost up.
+        the end of class. Use only when the live doubt limit for this part is used up or time is almost up,
+        and only for a real question about this chapter's science. Never park replies like "okay",
+        "haan", "samajh gaya" or "no doubt", and never park off-topic chat.
 
         Args:
             doubt: the doubt in a few words, e.g. "why is copper not magnetic"

@@ -206,3 +206,21 @@ def test_live_doubts_reset_each_part():
     assert lesson.live_doubts == 2
     finish_section(lesson)
     assert lesson.section == 1 and lesson.live_doubts == 0
+
+
+def test_acknowledgements_are_not_doubts():
+    from ustaad_agent.lesson import is_filler
+
+    for text in ["okay", "Ok ma'am", "haan ji", "samajh gaya", "theek hai", "no doubt", "got it, thanks", "Hmm.", ""]:
+        assert is_filler(text), text
+    for text in ["why does a magnet attract iron", "kya copper magnetic hai?", "what is a compass"]:
+        assert not is_filler(text), text
+
+
+def test_only_chapter_doubts_are_related():
+    from ustaad_agent.notes import related
+
+    assert related("why does a magnet attract iron", "g6-magnets")
+    assert related("which direction does the compass needle point", "g6-magnets")
+    assert not related("who won the cricket match", "g6-magnets")
+    assert not related("okay thank you", "g6-magnets")
