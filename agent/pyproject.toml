@@ -1,7 +1,7 @@
 [project]
 name = "ustaad-agent"
 version = "0.1.0"
-description = "Ustaad voice teacher agent"
+description = "MadamJi voice teacher agent"
 authors = [
     { name = "shalvirajpura2", email = "ceshalvi@gmail.com" }
 ]

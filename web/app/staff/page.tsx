@@ -1,6 +1,6 @@
 import { StaffAlerts } from "@/components/staff-alerts";
 
-export const metadata = { title: "Ustaad · Safety alerts" };
+export const metadata = { title: "MadamJi · Safety alerts" };
 
 export default function StaffPage() {
   return (

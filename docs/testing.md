@@ -1,4 +1,4 @@
-# Testing Ustaad
+# Testing MadamJi
 
 Three layers: automated tests for the engine and content, LLM-judged conversation evals for teacher
 behaviour, and manual plus real-student testing for how it actually feels.

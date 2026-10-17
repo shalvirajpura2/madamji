@@ -80,7 +80,7 @@ def search(query: str, grade: int | None = None) -> str:
         return "Nothing in the chapter notes. Answer from your own science knowledge at the student's level, or say you will check and keep it simple."
     lines = [f"[{p.chapter_title}, class {p.grade}, {p.topic}] {p.text}" for p in found]
     return (
-        "From the Ustaad chapter notes:\n" + "\n".join(lines) +
+        "From the MadamJi chapter notes:\n" + "\n".join(lines) +
         "\nUse this to answer in your own words at the student's level. If it belongs to a different class, "
         "say so lightly, like 'ye tum class 10 mein detail mein padhoge'."
     )

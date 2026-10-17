@@ -47,7 +47,7 @@ export function StaffAlerts() {
           const added = list.filter((a) => a.id > seen.current!);
           setFresh((f) => new Set([...f, ...added.map((a) => a.id)]));
           if (audio.current) ping(audio.current, added.some((a) => a.severity === "high"));
-          document.title = `(${added.length}) 🚨 Ustaad alerts`;
+          document.title = `(${added.length}) 🚨 MadamJi alerts`;
         }
         seen.current = newest;
         setAlerts(list);
@@ -77,7 +77,7 @@ export function StaffAlerts() {
         }}
       >
         <h1 className="text-2xl font-extrabold">Safety alerts</h1>
-        <p className="text-ink-soft">For the Ustaad care team only.</p>
+        <p className="text-ink-soft">For the MadamJi care team only.</p>
         <input
           type="password"
           value={passcode}

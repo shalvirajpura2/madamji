@@ -15,7 +15,7 @@ const kalam = Kalam({
 });
 
 export const metadata: Metadata = {
-  title: "Ustaad — your science class with Meera Ma'am",
+  title: "MadamJi — your science class with Meera Ma'am",
   description: "A voice-first science teacher for classes 6 and 10 who teaches like a real Indian classroom teacher.",
 };
 

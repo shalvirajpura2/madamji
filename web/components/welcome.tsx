@@ -37,7 +37,7 @@ export function Welcome() {
     <div className="grid w-full max-w-5xl items-center gap-8 md:grid-cols-[1fr_1.1fr]">
       <section className="flex flex-col items-center text-center md:items-start md:text-left">
         <p className="mb-2 rounded-full bg-marigold/15 px-3 py-1 text-sm font-semibold text-marigold-deep">
-          Ustaad · voice science class
+          MadamJi · voice science class
         </p>
         <h1 className="text-4xl leading-tight font-extrabold sm:text-5xl">
           Learn science by <span className="text-leaf">talking</span> to your teacher

@@ -98,7 +98,7 @@ def write_page(results: dict[str, dict]) -> None:
         for c, r in sorted(results.items())
     )
     (OUT / "index.html").write_text(
-        f"""<!doctype html><meta charset="utf-8"><title>Ustaad voice test</title>
+        f"""<!doctype html><meta charset="utf-8"><title>MadamJi voice test</title>
 <style>body{{font:16px system-ui;max-width:900px;margin:24px auto;padding:0 16px;background:#fff6e8;color:#2b2118}}
 section{{background:#fff;border-radius:16px;padding:12px 16px;margin:12px 0}}.p{{display:flex;gap:8px;align-items:center;margin:4px 0}}
 audio{{height:32px;flex:1}}</style>

@@ -1,6 +1,6 @@
-# Ustaad — Phase 1 plan
+# MadamJi — Phase 1 plan
 
-Ustaad is a voice-first science teacher for Indian school students. It should feel like sitting in a
+MadamJi is a voice-first science teacher for Indian school students. It should feel like sitting in a
 real classroom with a warm, slightly strict teacher who leads the lesson, writes on a green
 chalkboard, asks questions, checks answers and comes back to the lesson after every doubt.
 
