@@ -1,9 +1,9 @@
-# Ustaad
+# MadamJi
 
 A voice-first science teacher for Indian school students. Pick a chapter, walk into class, and
 **Meera Ma'am** teaches it part by part on a green chalkboard. She checks for doubts, asks practice
-questions, judges your answer, gives a hint, and moves on, all in a warm Indian-English and Hinglish
-voice. You can interrupt her any time, just like in a real class.
+questions, judges your answer and gives hints, all in a warm Indian voice that follows your language:
+English, Hinglish or Hindi. You can interrupt her any time, just like in a real class.
 
 - Subject: Science · Grades: 6 and 10 · 3 NCERT chapters each
 - Demo: _add Vercel link_ · Walkthrough video: _add Loom link_
@@ -24,9 +24,9 @@ food → nutrition), so you can hear the same teacher explain related ideas at t
 decides what happens next:
 
 ```
-intro → teach beat 1..n → "koi doubt?" → practice question → feedback → next part … → wrap-up
-            ▲                  │                 │
-            └── interrupted? ──┴── doubt answered, continue_lesson resumes from the same point
+intro → teach beat 1..n → "any doubts?" → practice question → feedback → next part … → doubt time → wrap-up
+            ▲                  │                 │                                         ▲
+            └── interrupted? ──┴── doubt answered live (2 per part) ── or parked on the doubt list
 ```
 
 Each step gives the LLM one focused instruction ("teach this point, you are writing X on the board").
@@ -38,10 +38,17 @@ If the student goes quiet, the teacher nudges, then hints, then moves on, like a
 - **Board in sync with the voice.** Each teaching beat writes one chalk line, and diagrams draw in alongside.
 - **Practice that teaches.** MCQ, true/false, fill-in-the-blank, numericals and short answers. Answers are
   graded in code (fast and exact, and spoken answers like "B wala", "doosra option" or "four forty ohm" work).
-  Short answers fall back to an LLM judge. The first wrong answer gets a hint that targets the specific
-  misconception, the second gets a kind explanation. Nobody gets stuck.
-- **Adapts to the grade.** Class 6: short sentences, stories, slower pace, more Hinglish. Class 10:
-  NCERT terms, formulas, board-exam tips, a brisker pace.
+  Short answers fall back to an LLM judge. **The teacher never gives the answer away:** wrong answers,
+  "skip" or "just tell me" earn hints that get stronger step by step (wrong MCQ options fade out, a
+  blank gets its first letter, a numerical gets its formula set up), and the student always finishes it.
+- **Runs to time.** The student picks a 15 or 25 minute class. A countdown is on screen; when time runs
+  low she stops starting new parts, and next class resumes from where she stopped.
+- **Keeps a doubt list.** Two doubts per part are answered on the spot. Beyond that, or when time is short,
+  she parks them on an on-screen doubt list (up to 5) and answers every one in "doubt time" before the class ends.
+- **Follows your language.** The class starts in English. Each student turn is classified in code
+  (English, Hinglish or Hindi), and she switches with you and stays there. Captions are always in Roman script.
+- **Adapts to the grade.** Class 6: short sentences, stories, a slower pace. Class 10: the NCERT
+  definition first, formulas and units, board-exam tips, a brisker pace.
 - **Remembers you.** Name, where you stopped, what you found tricky, and small personal details.
   The next class opens from there ("Pichhli baar poles kiye the…").
 - **Human handling of everything else.** 12 common FAQs (fees, exams, "are you a robot?"),
@@ -50,7 +57,7 @@ If the student goes quiet, the teacher nudges, then hints, then moves on, like a
   one persona prompt, not a wall of guardrails, so normal turns stay fast.
 - **Safety beyond a teacher.** Talk of self-harm, abuse or hurting someone makes the teacher call
   `raise_alert`: she responds with care, shares Tele MANAS 14416, and pauses the lesson.
-  A cheap background check (a keyword prefilter, then Gemini Flash-Lite) backs it up without adding
+  A cheap background check (a keyword prefilter, then a small model) backs it up without adding
   latency. Alerts are logged on the backend and appear on `/staff` with a sound ping.
 
 ## Architecture
@@ -60,8 +67,8 @@ browser (next.js on vercel)              livekit cloud               python agen
 ┌──────────────────────────┐  webrtc  ┌─────────────┐  webrtc  ┌─────────────────────────────────────┐
 │ chalkboard, teacher,     │◀────────▶│    room     │◀────────▶│ silero vad + multilingual turn model│
 │ question cards, controls │  audio   │             │          │ sarvam saaras:v4 stt (auto language)│
-│                          │  rpc  ──▶│ answer/hand │          │ gemini flash llm + tools            │
-│                          │◀── attrs │ lesson state│          │ sarvam bulbul:v4 tts (hinglish)     │
+│ timer, doubt list        │  rpc  ──▶│ answer/hand │          │ gpt-4.1-mini via livekit inference  │
+│                          │◀── attrs │ lesson state│          │ elevenlabs v4 turbo or sarvam tts   │
 └─────────┬────────────────┘          └─────────────┘          │ lesson engine · grading · glossary  │
           │ /api/token (loads memory into the agent dispatch)  │ notes search · safety monitor       │
           ▼                                                    └───────────────┬─────────────────────┘
@@ -73,6 +80,10 @@ browser (next.js on vercel)              livekit cloud               python agen
   (ignores "hmm" and coughs), and false-interruption resume. Endpointing waits longer while a question
   is open, because kids think out loud.
 - **Streaming:** the LLM streams into the TTS sentence by sentence, with preemptive generation turned on.
+- **Models:** the teacher LLM is `openai/gpt-4.1-mini` through LiveKit Inference (fast first token, reliable
+  tool calls, no extra key), with an automatic fallback to `google/gemini-2.5-flash` if it errors or stalls.
+  The voice is ElevenLabs `eleven_v4_turbo` with an Indian library voice, or Sarvam `bulbul:v4-flash`
+  (`TTS_PROVIDER` in `agent/.env.local`).
 - **Screen awareness:** the agent publishes a lesson snapshot as a participant attribute (phase, board
   lines, question, result, mood). The same snapshot goes into the LLM's instructions, so it knows exactly
   what the student can see. Taps (answers, raise hand, pause, "no doubts") come back as RPCs.
@@ -98,8 +109,9 @@ docs/     phase 1 plan and testing notes
 
 ## Running it
 
-You need free accounts for **LiveKit Cloud**, **Sarvam AI** and **Google AI Studio (Gemini)**.
-**Supabase** is optional locally and needed on Vercel.
+You need **LiveKit Cloud** (agent hosting and the LLM through LiveKit Inference), **Sarvam AI**
+(speech-to-text, and the voice if you choose it), and optionally **ElevenLabs** (a paid plan is needed
+to use Indian library voices through the API). **Supabase** is optional locally and needed on Vercel.
 
 ```bash
 # web
@@ -110,9 +122,10 @@ npm run dev                     # http://localhost:3000
 
 # agent (Linux or macOS; on Windows run it inside WSL)
 cd agent
-cp .env.example .env.local      # LiveKit, SARVAM_API_KEY, GOOGLE_API_KEY, same AGENT_SECRET
+cp .env.example .env.local      # LiveKit, SARVAM_API_KEY, ELEVEN_API_KEY (optional), same AGENT_SECRET
 ./dev.sh download-files         # VAD and turn detector models, once
 ./dev.sh dev                    # joins classes as they start
+./dev.sh compare-voices         # optional: blind listening page comparing candidate voices
 ```
 
 Handy dev pages: `/dev/room/g6-magnets` walks through every study-room state without the agent, and
@@ -129,8 +142,9 @@ Handy dev pages: `/dev/room/g6-magnets` walks through every study-room state wit
 
 ```bash
 cd agent
-./dev.sh test     # 66 unit tests: engine, grading, every question in every chapter, glossary
-./dev.sh evals    # 12 conversation evals with an LLM judge: faqs, distractors, safety, repeats, grades
+./dev.sh test     # 84 unit tests: engine, hints, doubt list, class clock, grading, language, every question
+./dev.sh evals    # 15 conversation evals with an LLM judge: faqs, distractors, safety, repeats, grades,
+                  # language following, never giving the answer, parking doubts
 cd ../web && npx tsc --noEmit && npx eslint .
 ```
 
@@ -141,9 +155,13 @@ The manual test script and user-testing notes are in [docs/testing.md](docs/test
 - **Cascaded STT → LLM → TTS, not a speech-to-speech model.** Realtime models are a little faster, but
   you lose control of the Indian accent, the glossary, Roman-script captions and reliable tool calls.
   For a teacher, control matters more.
-- **Sarvam for voice.** It is built for Indian languages and code-mixed speech, and `bulbul:v4-flash`
-  has Hinglish voices. The voice is set through `TTS_SPEAKER`, so a blind A/B against other voices
-  needs no code change.
+- **Voice: ElevenLabs v4 Turbo or Sarvam.** v4 Turbo tops independent TTS arenas, including Hindi, and
+  has expressive Indian voices; Sarvam is built in India for code-mixed speech and streams first audio in
+  about 240 ms from India. Both are one env line away, and `./dev.sh compare-voices` builds a blind
+  listening page so the choice is made by ear, not by spec sheet.
+- **LLM through LiveKit Inference.** The free Gemini tier allowed 20 requests a day and took 2–8 s to the
+  first token, which is unusable for voice. LiveKit Inference gives about 1.3 s from India on the same
+  key that runs the rooms, with a fallback model.
 - **Hands-free voice plus buttons.** Talking is natural, but Indian homes are noisy and kids are shy.
   So there is a raise-hand button, tap-to-answer, "No doubts, next", hints, pause, and typing as a fallback.
 - **Warm, slightly strict persona.** A favourite-teacher feel: praise is specific and varied, there is
