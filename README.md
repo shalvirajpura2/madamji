@@ -164,6 +164,63 @@ flowchart LR
 7. Scores and progress are saved, so the next class starts where this one ended. If a child says something
    worrying, she responds gently and the team is alerted.
 
+### How she knows her science (RAG)
+
+MadamJi does not teach from memory. Everything she teaches comes from our own NCERT-based chapter content,
+and when a student asks a doubt she looks it up first, then explains it in her own words.
+
+```mermaid
+flowchart LR
+    subgraph prep["Prepared once, before any class"]
+        direction TB
+        files[("<b>Our chapter files</b><br/>6 chapters, written and checked by us<br/>45 notes + every lesson point")]
+        split["<b>Cut into small passages</b><br/>114 passages, each tagged with<br/>chapter, class and topic"]
+        idx[("<b>Search index</b><br/>knows which passage<br/>uses which words<br/>1,391 words in total")]
+        files --> split --> idx
+    end
+
+    subgraph live["Every time a student asks a doubt"]
+        direction TB
+        ask(["<b>Student asks</b><br/>'copper magnet se kyun<br/>nahi chipakta?'"])
+        decide["<b>She decides to look it up</b><br/>when she is not sure, or the doubt<br/>goes beyond the current part"]
+        rewrite["<b>Turns it into search words</b><br/>in English, so Hinglish and Hindi<br/>doubts find the same notes<br/>'why copper not attracted magnet'"]
+        find["<b>Finds the best passages</b><br/>drops small words like 'the' and 'is'<br/>scores every passage on matching words<br/>gives the student's own class a boost<br/>keeps the top 3"]
+        hand["<b>Reads them before answering</b><br/>each passage labelled with its<br/>chapter, class and topic"]
+        answer(["<b>Explains in her own words</b><br/>at the student's level, in their language,<br/>and says so if it is a higher-class topic"])
+        ask --> decide --> rewrite --> find --> hand --> answer
+        find -. "nothing matches" .-> fallback["<b>Keeps it simple</b><br/>answers from basic science<br/>at the student's level"]
+        fallback -.-> answer
+    end
+
+    subgraph always["Given to her on every turn, no search needed"]
+        direction TB
+        point["<b>The current lesson point</b><br/>what is on the board, the question<br/>on screen and the hint level"]
+        faq["<b>12 common questions</b><br/>who are you, can you repeat,<br/>will this come in the exam"]
+        mem["<b>What she remembers</b><br/>the student's name, past scores<br/>and things they shared"]
+    end
+
+    idx --> find
+    always --> hand
+
+    classDef data fill:#f3ecfb,stroke:#8e5bd8,stroke-width:2px,color:#2b2118
+    classDef step fill:#e9f5ec,stroke:#3f8f5a,stroke-width:2px,color:#2b2118
+    classDef person fill:#fde6e1,stroke:#ff7a59,stroke-width:2px,color:#2b2118
+    classDef ctx fill:#fff6e8,stroke:#dc8a0b,stroke-width:2px,color:#2b2118
+    class files,split,idx data
+    class decide,rewrite,find,hand,fallback step
+    class ask,answer person
+    class point,faq,mem ctx
+```
+
+- **Two kinds of grounding.** The lesson plan, the FAQs and the student's memory are put in front of her on
+  every turn. Search is only for doubts, so a normal class turn never waits on a lookup.
+- **Why keyword search and not embeddings.** The content is small (114 passages) and full of exact science
+  words like *magnetic*, *resistance* and *photosynthesis*. A BM25 keyword index finds the right passage in
+  well under a millisecond, needs no extra API call, and has nothing to go stale. Rewriting each doubt into
+  English keywords first is what lets Hinglish and Hindi doubts hit the same notes.
+- **Answers stay inside the syllabus.** Every passage carries its chapter and class, so she can say
+  "you will study this in detail in class 10" instead of jumping ahead.
+
 **Under the hood**
 
 - **Turn taking:** voice activity detection, LiveKit's multilingual end-of-turn model, and adaptive
