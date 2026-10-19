@@ -41,6 +41,23 @@ TEMPLATES = {
 }
 
 
+# what each chapter may draw; anything else is off the chapter and never drawn
+CHAPTER_DRAWINGS = {
+    "g6-magnets": (("magnet-shapes", "bar-magnet-filings", "compass", "attract-repel"), ("magnets", "flow")),
+    "g6-food": (("food-plate", "iodine-test"), ("flow",)),
+    "g6-water": (("states-of-water", "water-cycle"), ("flow",)),
+    "g10-electricity": (("simple-circuit", "vi-graph", "series-parallel"), ("circuit", "flow")),
+    "g10-magnetic-effects": (("field-lines", "solenoid", "compass"), ("magnets", "wire_field", "circuit", "flow")),
+    "g10-life-processes": (("photosynthesis", "respiration-pathways"), ("flow",)),
+}
+
+
+def for_chapter(chapter_id: str) -> tuple[dict[str, str], dict[str, str]]:
+    """The reviewed diagrams and drawing templates this chapter may use."""
+    diagrams, templates = CHAPTER_DRAWINGS.get(chapter_id, ((), ("flow",)))
+    return {d: DIAGRAMS[d] for d in diagrams}, {t: TEMPLATES[t] for t in templates}
+
+
 def template_params(template: str, options: str) -> dict | None:
     """Turn the teacher's options into checked settings for a drawing template."""
     text = (options or "").strip()

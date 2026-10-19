@@ -68,3 +68,22 @@ def test_background_rect_is_dropped():
     out = sanitize('<svg viewBox="0 0 280 140"><rect x="0" y="0" width="280" height="140" fill="green"/>'
                    '<line x1="1" y1="1" x2="9" y2="9"/><circle cx="5" cy="5" r="2"/></svg>')
     assert out is not None and "<rect" not in out
+
+
+def test_every_chapter_draws_only_its_own_pictures():
+    from ustaad_agent.content import chapters
+    from ustaad_agent.drawing import CHAPTER_DRAWINGS, TEMPLATES, for_chapter
+
+    assert set(CHAPTER_DRAWINGS) == set(chapters())
+    for chapter_id, (diagrams, templates) in CHAPTER_DRAWINGS.items():
+        assert set(diagrams) <= set(DIAGRAMS) and set(templates) <= set(TEMPLATES), chapter_id
+    food_diagrams, food_templates = for_chapter("g6-food")
+    assert "solenoid" not in food_diagrams and "magnets" not in food_templates
+
+
+def test_persona_lists_only_this_chapters_drawings_and_keeps_internals_private():
+    from ustaad_agent.prompts import persona
+
+    text = persona("g6-food")
+    assert "food-plate" in text and "solenoid" not in text and "photosynthesis (" not in text
+    assert "What stays private" in text

@@ -67,6 +67,7 @@ class Classroom:
         self._paused_at = 0.0
         self.drawing: dict | None = None  # what Ma'am drew on the board for a doubt
         self._drawings = 0
+        self._drawn_for = ""  # the student turn that already got a drawing
         self._last_user_seen = ""
         self.turn_place: str | None = None  # where the latest student turn belongs, see notes.place
 
@@ -98,7 +99,7 @@ class Classroom:
 
     def _instructions(self) -> str:
         clock = prompts.timing(self.minutes, self.ends_at - time.time(), self.lesson)
-        return prompts.persona() + "\n\n" + prompts.classroom(self.lesson, self.student, self.language, clock)
+        return prompts.persona(self.lesson.chapter.id) + "\n\n" + prompts.classroom(self.lesson, self.student, self.language, clock)
 
     def note_language(self, text: str) -> bool:
         """Switch the class language when the student switches. Returns True if it changed.
@@ -334,9 +335,21 @@ class Classroom:
                 "you will answer it before the class ends, then call continue_lesson.")
 
     async def tool_draw(self, what: str, diagram_id: str = "", template: str = "", options: str = "") -> str:
+        turn = self._last_user_seen
+        if turn and turn == self._drawn_for:
+            return ("One drawing at a time. Explain the drawing already on the board first, and offer to draw "
+                    "something else after that. Do not mention any limit.")
+        if notes.place(what, self.lesson.chapter.id, self.lesson.section) in (notes.OTHER, notes.FILLER):
+            self.transcript.event("drawing_refused", what=what)
+            return ("That is not part of today's chapter, so it was not drawn. Kindly say you will draw pictures "
+                    "for today's chapter, without listing what you can draw, and bring them back to the board.")
+        self._drawn_for = turn
+        diagrams, templates = drawing.for_chapter(self.lesson.chapter.id)
+        diagram_id = diagram_id if diagram_id in diagrams else ""
+        template = template if template in templates else ""
         self._drawings += 1
-        params = drawing.template_params(template, options) if template in drawing.TEMPLATES else None
-        if params is not None and diagram_id not in drawing.DIAGRAMS:
+        params = drawing.template_params(template, options) if template else None
+        if params is not None:  # a template drawn for exactly what was asked beats a general diagram
             self.drawing = {"n": self._drawings, "kind": "template", "template": template, "params": params,
                             "title": what[:60]}
             self.transcript.event("drawing", kind="template", template=template, params=params, what=what)
@@ -345,11 +358,11 @@ class Classroom:
                     "doubt using it, pointing to its parts, in three or four sentences.")
         if template and params is None:
             logger.info("draw template %s with bad options %r, falling back", template, options)
-        if diagram_id in drawing.DIAGRAMS:
+        if diagram_id:
             self.drawing = {"n": self._drawings, "kind": "diagram", "id": diagram_id, "title": what[:60]}
             self.transcript.event("drawing", kind="diagram", id=diagram_id, what=what)
             await self.publish()
-            return (f"The reviewed diagram is now on the board ({drawing.DIAGRAMS[diagram_id]}). Explain the doubt "
+            return (f"The diagram is now on the board ({drawing.DIAGRAMS[diagram_id]}). Explain the doubt "
                     "using it, pointing to its parts, in three or four sentences.")
         made = await drawing.sketch(what, self.student.grade)
         if made is None:

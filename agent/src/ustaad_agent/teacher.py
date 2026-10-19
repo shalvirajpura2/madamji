@@ -90,8 +90,9 @@ class Teacher(Agent):
     async def draw_on_board(
         self, context: RunContext, what: str, diagram_id: str = "", template: str = "", options: str = ""
     ) -> str:
-        """Draw on the chalkboard to explain a doubt: when the student asks you to draw, show or explain
-        with a picture, or a picture clearly helps. First say a short line like "Let me draw that for you".
+        """Draw on the chalkboard to explain a doubt about today's chapter: when the student asks you to
+        draw, show or explain with a picture, or a picture clearly helps. One drawing per reply, and never
+        for anything outside today's chapter. First say a short line like "Let me draw that for you".
         Order of preference: a reviewed diagram if one fits exactly, else a drawing template, else leave both
         empty for a quick freehand sketch (only simple labelled pictures, never field lines or directions).
 
