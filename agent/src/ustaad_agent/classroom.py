@@ -14,7 +14,7 @@ from livekit.agents.voice import SpeechHandle
 from . import backend, drawing, grading, language, notes, prompts
 from .content import Question
 from .language import ENGLISH
-from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step
+from .lesson import CHECK, DOUBTS, FEEDBACK, INTRO, QUESTION, TEACH, Lesson, Step, is_filler
 from .config import settings
 from .models import ask_json
 from .transcript import Transcript
@@ -70,6 +70,9 @@ class Classroom:
         self._drawn_for = ""  # the student turn that already got a drawing
         self._last_user_seen = ""
         self.turn_place: str | None = None  # where the latest student turn belongs, see notes.place
+        self._quiet_turn = False  # she decided the last words were not meant for her
+        self._parked_for: tuple[str, str] | None = None  # (student turn, doubt) just put on the doubt list
+        self.turn_addressed = True
 
     # ---- setup ----
 
@@ -156,7 +159,12 @@ class Classroom:
         await self._refresh()
         self._track(ctx.speech_handle, step)
         self._save_if_progressed()
-        return "Do this now, in this same reply: " + prompts.step(step, self.lesson, self.student)
+        lead = ""
+        if self._parked_for and self._parked_for[0] == self._last_user_seen:
+            lead = (f"First, in one warm line, tell them their doubt about \"{self._parked_for[1]}\" is on the doubt "
+                    "list and you will answer it before the class ends, unless you already said so. Then: ")
+            self._parked_for = None
+        return "Do this now, in this same reply: " + lead + prompts.step(step, self.lesson, self.student)
 
     def _track(self, handle: SpeechHandle, step: Step) -> None:
         if handle.id not in self._steps:
@@ -169,7 +177,12 @@ class Classroom:
             return
         if handle.interrupted:
             if step.kind in ("intro", "beat", "resume"):
-                self.lesson.mark_interrupted()
+                said = " ".join(
+                    i.text_content or "" for i in handle.chat_items if getattr(i, "role", None) == "assistant"
+                )
+                if step.kind == "resume":
+                    said = f"{self.lesson.cut_off} {said}"
+                self.lesson.mark_interrupted(said)
             return
         if step.kind == "wrap":
             self.mood = "proud"
@@ -277,11 +290,38 @@ class Classroom:
             return
         self._last_user_seen = message_id
         self.turn_place = None
+        self.turn_addressed = notes.addressed(text)
         if self.lesson.phase in (TEACH, CHECK):
             self.turn_place = notes.place(text, self.lesson.chapter.id, self.lesson.section)
             # doubts about the board right now are always answered, so only other parts use up the limit
             if self.turn_place == notes.CHAPTER:
                 self.lesson.note_live_doubt()
+
+    def is_backchannel(self, text: str) -> bool:
+        """True for "yeah", "haan", "okay ma'am" said while she is speaking: a sign of listening, not
+        a turn. Dropping it lets the paused speech resume from the same word."""
+        speech = self.session.current_speech
+        return speech is not None and not speech.interrupted and is_filler(text)
+
+    def note_backchannel(self, text: str) -> None:
+        self.transcript.event("backchannel", text=text)
+
+    def tool_ignore(self) -> str:
+        self._quiet_turn = True
+        self.transcript.event("ignored_side_talk")
+        if self.lesson.phase in (INTRO, TEACH) and self.lesson.interrupted:
+            self._advance = asyncio.create_task(self._resume_after_side_talk())
+        return "Stay silent now. Say nothing at all."
+
+    def take_quiet_turn(self) -> bool:
+        quiet, self._quiet_turn = self._quiet_turn, False
+        return quiet
+
+    async def _resume_after_side_talk(self) -> None:
+        await asyncio.sleep(1.2)
+        if self.session.user_state == "speaking" or self.lesson.paused or self._closing:
+            return
+        await self.run(self.lesson.proceed())
 
     @property
     def is_paused(self) -> bool:
@@ -324,6 +364,8 @@ class Classroom:
             return ("This doubt is about what you are teaching right now, so it was not parked. Answer it now, "
                     "briefly: first acknowledge exactly what they asked, explain, then tie it back to the board.")
         number = self.lesson.park(doubt)
+        if number is not None:
+            self._parked_for = (self._last_user_seen, doubt)
         if self.lesson.live_doubts > 0:
             self.lesson.live_doubts -= 1  # parked, not answered live
         await self._refresh()

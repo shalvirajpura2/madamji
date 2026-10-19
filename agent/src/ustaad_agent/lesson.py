@@ -74,6 +74,7 @@ class Lesson:
     hints: int = 0
     eliminated: list[int] = field(default_factory=list)
     interrupted: bool = False
+    cut_off: str = ""  # what she had already said of the point when she was interrupted
     paused: bool = False
     sections_done: int = 0
     revealed: int = 0
@@ -192,9 +193,11 @@ class Lesson:
             return self._next_doubt_or_wrap()
         return None
 
-    def mark_interrupted(self) -> None:
+    def mark_interrupted(self, said: str | None = None) -> None:
         if self.phase in (INTRO, TEACH):
             self.interrupted = True
+            if said is not None:
+                self.cut_off = said.strip()[-400:]
 
     def _raise_hint(self) -> None:
         self.hints = min(self.hints + 1, MAX_HINT)

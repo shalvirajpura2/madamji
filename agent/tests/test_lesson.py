@@ -239,3 +239,54 @@ def test_doubts_are_placed_by_part():
     assert place("why does a compass point north", "g6-magnets", 2) == CURRENT
     # food chapter, balanced diet part
     assert place("what should we eat for lunch in our daily life", "g6-food", 3) in (CURRENT, CHAPTER)
+
+
+def test_resume_continues_from_what_she_already_said():
+    from ustaad_agent.prompts import Student, step
+
+    lesson = fresh()
+    lesson.start()
+    lesson.advance()
+    lesson.mark_interrupted("Magnets pull things made of iron, nickel and cobalt, like pins and nails.")
+    resume = lesson.proceed()
+    assert resume.kind == "resume"
+    text = step(resume, lesson, Student(id="t", name="Aarav", grade=6))
+    assert "already said" in text and "iron, nickel and cobalt" in text
+    assert "where were we" not in text.replace("never 'So, where were we'", "")
+
+
+def test_short_cut_off_restarts_the_point():
+    from ustaad_agent.prompts import Student, step
+
+    lesson = fresh()
+    lesson.start()
+    lesson.advance()
+    lesson.mark_interrupted("Aarav,")
+    text = step(lesson.proceed(), lesson, Student(id="t", name="Aarav", grade=6))
+    assert "already said" not in text
+
+
+def test_backchannels_are_dropped_only_while_she_speaks():
+    from types import SimpleNamespace
+
+    from ustaad_agent.classroom import Classroom
+
+    def room(speech):
+        return SimpleNamespace(session=SimpleNamespace(current_speech=speech))
+
+    speaking = SimpleNamespace(interrupted=False)
+    assert Classroom.is_backchannel(room(speaking), "haan ji")
+    assert Classroom.is_backchannel(room(speaking), "Okay ma'am.")
+    assert not Classroom.is_backchannel(room(speaking), "ruko, mera ek doubt hai")
+    assert not Classroom.is_backchannel(room(speaking), "why?")
+    assert not Classroom.is_backchannel(room(None), "okay")  # after she stops, "okay" means go on
+    assert not Classroom.is_backchannel(room(SimpleNamespace(interrupted=True)), "okay")
+
+
+def test_words_aimed_at_the_teacher_are_told_apart_from_side_talk():
+    from ustaad_agent.notes import addressed
+
+    for text in ["Ma'am which is your favourite team", "aap kaun ho", "can you repeat", "kya ye sahi hai?"]:
+        assert addressed(text), text
+    for text in ["Bhai aur ho jaye.", "Mummy ek minute", "Ye dekh Bangalore mein deep ja rahe ho"]:
+        assert not addressed(text), text

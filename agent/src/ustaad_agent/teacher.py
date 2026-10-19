@@ -1,7 +1,8 @@
 from collections.abc import AsyncIterable
 from typing import TYPE_CHECKING, Literal
 
-from livekit.agents import Agent, ModelSettings, RunContext, function_tool, llm
+from livekit import rtc
+from livekit.agents import Agent, ModelSettings, RunContext, function_tool, llm, stt
 
 from . import notes, speech
 from .language import STYLE
@@ -20,9 +21,21 @@ class Teacher(Agent):
         super().__init__(instructions=instructions)
         self.classroom = classroom
 
+    async def stt_node(self, audio: AsyncIterable[rtc.AudioFrame], model_settings: ModelSettings):
+        async for ev in Agent.default.stt_node(self, audio, model_settings):
+            if (
+                isinstance(ev, stt.SpeechEvent)
+                and ev.type == stt.SpeechEventType.FINAL_TRANSCRIPT
+                and ev.alternatives
+                and self.classroom.is_backchannel(ev.alternatives[0].text)
+            ):
+                self.classroom.note_backchannel(ev.alternatives[0].text)
+                continue  # she keeps talking; the session resumes her paused sentence
+            yield ev
+
     def llm_node(self, chat_ctx: llm.ChatContext, tools, model_settings: ModelSettings):
-        if self.classroom.is_paused:
-            return _silence()  # class is paused: no replies, even to typed messages
+        if self.classroom.is_paused or self.classroom.take_quiet_turn():
+            return _silence()  # paused, or the last words were not meant for her
         # runs for spoken and typed turns alike: follow the student's latest language from this reply on
         last_user = next((m for m in reversed(chat_ctx.items) if getattr(m, "role", None) == "user"), None)
         if last_user is not None:
@@ -47,6 +60,10 @@ class Teacher(Agent):
         if where == notes.CHAPTER:
             return (" If the student just asked a doubt, it is about this chapter: acknowledge exactly what they asked "
                     "and answer it now, briefly, then come back to the board.")
+        if where == notes.OTHER and not self.classroom.turn_addressed:
+            return (" These words are not about the lesson and do not seem to be said to you. If they are the "
+                    "student talking to someone else or background voices, call ignore_side_talk and say nothing. "
+                    "If they are clearly talking to you, reply briefly. Never put this on the doubt list.")
         if where == notes.OTHER:
             return " This is not about this chapter, so never put it on the doubt list."
         return ""
@@ -56,6 +73,13 @@ class Teacher(Agent):
 
     def transcription_node(self, text: AsyncIterable[str], model_settings: ModelSettings):
         return speech.caption_stream(text)
+
+    @function_tool()
+    async def ignore_side_talk(self, context: RunContext) -> str:
+        """The words you just heard were clearly not meant for you: the student talking to someone else
+        at home, a TV or other voices, or broken words that make no sense in class. Call it on its own
+        and say nothing. If unsure, do not call it; reply briefly instead."""
+        return self.classroom.tool_ignore()
 
     @function_tool()
     async def continue_lesson(self, context: RunContext) -> str:

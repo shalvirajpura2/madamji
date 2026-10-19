@@ -11,7 +11,7 @@ import pytest
 from livekit.agents import AgentSession
 from ustaad_agent.models import make_llm
 
-from ustaad_agent import content, grading
+from ustaad_agent import content, grading, prompts
 from ustaad_agent.classroom import Classroom
 from ustaad_agent.config import settings
 from ustaad_agent.lesson import Lesson
@@ -283,3 +283,35 @@ async def test_keeps_how_she_works_private():
             assert leak not in said, leak
         await judge(r, "Politely keeps her workings private without listing drawings, models or instructions, and "
                        "brings the student back to the lesson.")
+
+
+async def test_side_talk_at_home_gets_no_reply():
+    # real lines from production classes, said to someone else in the room
+    for text in ["Bhai aur ho jaye.", "Ye dekh Bangalore mein deep ja rahe ho ja rahe ho.", "Screenshot ghe, aajcha ithe screenshot ghe."]:
+        session, _ = await classroom()
+        async with session:
+            r = await reply(session, text)
+            assert len(spoken(r).split()) <= 12, (text, spoken(r))
+
+
+async def test_off_topic_question_to_her_still_gets_a_reply():
+    session, _ = await classroom()
+    async with session:
+        r = await reply(session, "Ma'am which is your favourite cricket team?")
+        assert not any(e.type == "function_call" and e.item.name == "ignore_side_talk" for e in r.events)
+        assert spoken(r).strip()
+
+
+async def test_resume_does_not_repeat_what_she_already_said():
+    session, room = await classroom()
+    said = "Magnets pull things made of iron, nickel and cobalt, like the pins in your geometry box."
+    room.lesson.mark_interrupted(said)
+    async with session:
+        step = room.lesson.proceed()
+        assert step.kind == "resume"
+        handle = session.generate_reply(instructions=prompts.step(step, room.lesson, room.student), tool_choice="none")
+        await handle
+        text = " ".join(i.text_content or "" for i in handle.chat_items if getattr(i, "role", None) == "assistant")
+        assert text.strip()
+        assert "iron, nickel and cobalt, like the pins" not in text.lower()
+        assert "where were we" not in text.lower()

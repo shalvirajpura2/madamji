@@ -84,6 +84,17 @@ def related(text: str, chapter_id: str) -> bool:
 
 FILLER, CURRENT, CHAPTER, OTHER = "filler", "current", "chapter", "other"
 
+# words a student uses when talking to the teacher, not to someone else in the room
+ADDRESS = re.compile(
+    r"\b(ma'?am|mam|madam|madamji|miss|teacher|meera|sir|you|your|aap|aapka|aapki|aapko|aapne|tum|tumhara|tumhe)\b|\?",
+    re.IGNORECASE,
+)
+
+
+def addressed(text: str) -> bool:
+    """True when the words look aimed at the teacher: they name her, say you or aap, or ask a question."""
+    return bool(ADDRESS.search(text))
+
 
 @cache
 def _sections(chapter_id: str) -> tuple[list[set[str]], Counter]:
