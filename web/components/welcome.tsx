@@ -138,7 +138,7 @@ export function Welcome() {
             <div>
               <h2 className="text-2xl font-extrabold">Sign in to start learning</h2>
               <p className="mt-1 text-ink-soft">
-                Ma&apos;am remembers your progress on every device. Ask a parent to help you sign in.
+                Ma&apos;am remembers your progress on every device.
               </p>
             </div>
             <button
