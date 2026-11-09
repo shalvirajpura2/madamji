@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AccessToken, RoomAgentDispatch, RoomConfiguration } from "livekit-server-sdk";
 import { chapterById } from "@/lib/content";
+import { studentIdFor } from "@/lib/auth";
 import { allow, clientKey } from "@/lib/rate-limit";
 import { store } from "@/lib/store";
 
@@ -36,8 +37,11 @@ export async function POST(req: Request) {
     return bad("Bad class request.");
   }
 
+  const who = await studentIdFor(request.student?.id);
+  if ("error" in who) return who.error;
+  const id = who.id;
+
   const chapter = chapterById(request.chapterId ?? "");
-  const id = String(request.student?.id ?? "").slice(0, 64);
   const name = String(request.student?.name ?? "").trim().slice(0, 40);
   const grade = Number(request.student?.grade);
   if (!chapter || !id || !name || ![6, 10].includes(grade)) return bad("Pick a chapter and tell us your name first.");
