@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ClassTranscripts } from "@/components/class-transcripts";
 import { Logo } from "@/components/logo";
+import { StaffActivity } from "@/components/staff-activity";
+import { StaffClasses } from "@/components/staff-classes";
 import type { AlertRecord } from "@/lib/store/types";
 
 const POLL_MS = 4000;
@@ -24,13 +26,15 @@ function ping(ctx: AudioContext, high: boolean) {
   });
 }
 
+type Tab = "alerts" | "students" | "activity" | "transcripts";
+
 export function StaffAlerts() {
   const [passcode, setPasscode] = useState("");
   const [active, setActive] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<AlertRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fresh, setFresh] = useState<Set<number>>(new Set());
-  const [tab, setTab] = useState<"alerts" | "classes">("alerts");
+  const [tab, setTab] = useState<Tab>("alerts");
   const audio = useRef<AudioContext | null>(null);
   const seen = useRef<number | null>(null);
 
@@ -99,14 +103,21 @@ export function StaffAlerts() {
   return (
     <>
       <header className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-1 gap-1 rounded-full border-2 border-line bg-white p-1">
-          {(["alerts", "classes"] as const).map((t) => (
+        <div className="flex flex-1 flex-wrap gap-1 rounded-3xl border-2 border-line bg-white p-1">
+          {(["alerts", "students", "activity", "transcripts"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`rounded-full px-4 py-1.5 font-bold ${tab === t ? "bg-ink text-paper" : "text-ink-soft"}`}
             >
-              {t === "alerts" ? `Safety alerts${alerts.length ? ` (${alerts.length})` : ""}` : "Class transcripts"}
+              {
+                {
+                  alerts: `Safety alerts${alerts.length ? ` (${alerts.length})` : ""}`,
+                  students: "Students & classes",
+                  activity: "Activity log",
+                  transcripts: "Class transcripts",
+                }[t]
+              }
             </button>
           ))}
         </div>
@@ -121,8 +132,12 @@ export function StaffAlerts() {
         </button>
       </header>
 
-      {tab === "classes" ? (
+      {tab === "transcripts" ? (
         <ClassTranscripts passcode={active} />
+      ) : tab === "students" ? (
+        <StaffClasses passcode={active} />
+      ) : tab === "activity" ? (
+        <StaffActivity passcode={active} />
       ) : (
         <>
         {error && (
