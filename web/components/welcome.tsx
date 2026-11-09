@@ -5,14 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { Teacher } from "@/components/teacher";
+import { TrialBadge } from "@/components/trial-badge";
+import { signOut as endSession, trialOf, type Me } from "@/lib/account";
 import { clearStudent, newStudentId, saveStudent, useStudent, type Student } from "@/lib/student";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-
-// what /api/me says: auth=false means sign-in isn't set up (local dev only)
-type Me =
-  | { auth: false }
-  | { auth: true; user: null }
-  | { auth: true; user: { id: string; email: string; name: string }; profile: Student | null };
 
 const GRADES = [
   { grade: 6, label: "Class 6", note: "Curiosity book · stories & experiments", color: "bg-sky/10 border-sky" },
@@ -47,7 +43,7 @@ export function Welcome() {
           setName(d.user.name.slice(0, 40));
         }
       })
-      .catch(() => alive && setMe({ auth: false }));
+      .catch(() => alive && setMe({ auth: false, trial: null }));
     return () => {
       alive = false;
     };
@@ -72,8 +68,7 @@ export function Welcome() {
 
   async function signOut() {
     setBusy(true);
-    await supabaseBrowser().auth.signOut().catch(() => {});
-    clearStudent();
+    await endSession();
     setName("");
     setGrade(null);
     setEditing(false);
@@ -87,14 +82,18 @@ export function Welcome() {
     setBusy(true);
     setError(null);
     const res = await fetch("/api/students", { method: "POST", body: JSON.stringify(profile) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { profile?: Student; error?: string } | null;
     setBusy(false);
     if (signedIn && !res?.ok) {
       setError(
-        res?.status === 401 ? "Your sign-in expired. Please sign in again." : "Couldn't save your profile. Please try again.",
+        res?.status === 401
+          ? "Your sign-in expired. Please sign in again."
+          : (data?.error ?? "Couldn't save your profile. Please try again."),
       );
       return;
     }
-    saveStudent(profile);
+    // the server keeps the name a student first chose
+    saveStudent(data?.profile ?? profile);
     router.push("/learn");
   }
 
@@ -165,22 +164,15 @@ export function Welcome() {
             >
               Go to my chapters →
             </Link>
+            {trialOf(me) && <TrialBadge trial={trialOf(me)!} className="text-center text-[15px]" />}
             {signedIn ? (
-              <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-semibold text-ink-soft">
-                <button
-                  onClick={() => {
-                    setName(student.name);
-                    setGrade(student.grade);
-                    setEditing(true);
-                  }}
-                  className="underline underline-offset-4"
-                >
-                  Change name or class
-                </button>
-                <button onClick={signOut} disabled={busy} className="underline underline-offset-4">
-                  Not {student.name}? Sign out
-                </button>
-              </div>
+              <button
+                onClick={signOut}
+                disabled={busy}
+                className="text-sm font-semibold text-ink-soft underline underline-offset-4"
+              >
+                Not {student.name}? Sign out
+              </button>
             ) : (
               <button
                 onClick={() => {
@@ -213,6 +205,11 @@ export function Welcome() {
                 placeholder="e.g. Aarav"
                 className="rounded-2xl border-2 border-line bg-paper px-4 py-3 text-xl font-semibold outline-none focus:border-marigold"
               />
+              {signedIn && (
+                <span className="text-sm text-ink-soft">
+                  This is how Ma&apos;am will call you. You can&apos;t change it later, so check the spelling.
+                </span>
+              )}
             </label>
 
             <fieldset className="flex flex-col gap-2">

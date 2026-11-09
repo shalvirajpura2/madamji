@@ -7,6 +7,8 @@ import { ConnectionState, TokenSource } from "livekit-client";
 import { RoomAudioRenderer, SessionProvider, useSession } from "@livekit/components-react";
 import { Logo } from "@/components/logo";
 import { Teacher } from "@/components/teacher";
+import { TrialBadge } from "@/components/trial-badge";
+import { classesLeft, trialOf, useMe, type Trial } from "@/lib/account";
 import type { Chapter } from "@/lib/content";
 import { useStudent } from "@/lib/student";
 import { LiveClassroom } from "./live-classroom";
@@ -59,7 +61,13 @@ function Session({
   student: { id: string; name: string; grade: number };
 }) {
   const tokenSource = useMemo(() => TokenSource.endpoint("/api/token"), []);
-  const [minutes, setMinutes] = useState<ClassLength>(readLength);
+  const [chosen, setMinutes] = useState<ClassLength>(readLength);
+  const { me, reload } = useMe(student.id);
+  const trial = trialOf(me);
+  const left = trial ? classesLeft(trial) : null;
+  const canTake = (m: ClassLength) => !left || (m === 25 ? left.long : left.short) > 0;
+  // if the length they like is used up, offer the one they still have
+  const minutes: ClassLength = canTake(chosen) ? chosen : canTake(chosen === 25 ? 15 : 25) ? (chosen === 25 ? 15 : 25) : chosen;
   const session = useSession(tokenSource, {
     agentName: AGENT_NAME,
     agentMetadata: JSON.stringify({ student, chapterId: chapter.id, minutes }),
@@ -108,6 +116,7 @@ function Session({
       console.error(e);
       const reason = /"error":"([^"]+)"/.exec(String((e as Error).message))?.[1];
       setJoinError(reason ?? "We couldn't open the classroom. Check your internet and try again.");
+      reload();
     } finally {
       setJoining(false);
     }
@@ -149,6 +158,8 @@ function Session({
           setMinutes(m);
           saveLength(m);
         }}
+        trial={trial}
+        canTake={canTake}
       />
     );
   }
@@ -173,7 +184,11 @@ function Lobby(p: {
   minutes: ClassLength;
   onMinutes: (minutes: ClassLength) => void;
   onTour: () => void;
+  trial: Trial | null;
+  canTake: (minutes: ClassLength) => boolean;
 }) {
+  // a rejoin continues the class that dropped, so it never needs a free class
+  const usedUp = !p.rejoin && p.trial !== null && classesLeft(p.trial).total === 0;
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:py-10">
       <div className="self-start">
@@ -193,22 +208,27 @@ function Lobby(p: {
           <fieldset className="mt-5">
             <legend className="mb-2 font-bold">How long is today&apos;s class?</legend>
             <div className="grid grid-cols-2 gap-3">
-              {LENGTHS.map((l) => (
-                <button
-                  key={l.minutes}
-                  type="button"
-                  aria-pressed={p.minutes === l.minutes}
-                  onClick={() => p.onMinutes(l.minutes)}
-                  className={`rounded-2xl border-2 px-4 py-3 text-left transition ${
-                    p.minutes === l.minutes ? "border-leaf bg-leaf/10" : "border-line bg-white hover:border-marigold"
-                  }`}
-                >
-                  <span className="block text-xl font-extrabold">⏱ {l.minutes} min</span>
-                  <span className="text-sm text-ink-soft">{l.note}</span>
-                </button>
-              ))}
+              {LENGTHS.map((l) => {
+                const open = p.rejoin || p.canTake(l.minutes);
+                return (
+                  <button
+                    key={l.minutes}
+                    type="button"
+                    disabled={!open}
+                    aria-pressed={open && p.minutes === l.minutes}
+                    onClick={() => p.onMinutes(l.minutes)}
+                    className={`rounded-2xl border-2 px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                      open && p.minutes === l.minutes ? "border-leaf bg-leaf/10" : "border-line bg-white enabled:hover:border-marigold"
+                    }`}
+                  >
+                    <span className="block text-xl font-extrabold">⏱ {l.minutes} min</span>
+                    <span className="text-sm text-ink-soft">{open ? l.note : "Free class used"}</span>
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
+          {p.trial && <TrialBadge trial={p.trial} className="mt-4 text-[15px]" />}
 
           <ul className="mt-5 grid gap-2 text-[15px] font-medium sm:grid-cols-3">
             <li className="rounded-2xl bg-paper-deep/70 px-3 py-2">🎧 Headphones help, but are not a must</li>
@@ -238,14 +258,16 @@ function Lobby(p: {
           )}
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              onClick={p.onEnter}
-              disabled={p.joining}
-              className="rounded-2xl bg-leaf px-7 py-4 text-xl font-bold text-white shadow-[0_5px_0_#2c6b42] transition enabled:active:translate-y-1 enabled:active:shadow-none disabled:opacity-60"
-            >
-              {p.joining ? "Opening the door…" : p.rejoin ? "Rejoin class" : "Enter class 🚪"}
-            </button>
-            {(p.mic === "blocked" || p.mic === "missing") && (
+            {!usedUp && (
+              <button
+                onClick={p.onEnter}
+                disabled={p.joining}
+                className="rounded-2xl bg-leaf px-7 py-4 text-xl font-bold text-white shadow-[0_5px_0_#2c6b42] transition enabled:active:translate-y-1 enabled:active:shadow-none disabled:opacity-60"
+              >
+                {p.joining ? "Opening the door…" : p.rejoin ? "Rejoin class" : "Enter class 🚪"}
+              </button>
+            )}
+            {!usedUp && (p.mic === "blocked" || p.mic === "missing") && (
               <button onClick={p.onEnterWithoutMic} disabled={p.joining} className="rounded-2xl border-2 border-line bg-white px-5 py-3.5 font-bold">
                 Join with typing only
               </button>

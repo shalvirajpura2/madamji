@@ -6,14 +6,19 @@ import { useEffect, useState } from "react";
 import { ChapterArt } from "@/components/chapter-art";
 import { Logo } from "@/components/logo";
 import { Teacher } from "@/components/teacher";
+import { TrialBadge } from "@/components/trial-badge";
+import { signOut, trialOf, useMe } from "@/lib/account";
 import type { Chapter } from "@/lib/content";
 import type { ProgressRecord } from "@/lib/store/types";
 import { saveStudent, useStudent } from "@/lib/student";
+import { authEnabled } from "@/lib/supabase/config";
 
 export function ChapterList({ chapters }: { chapters: Chapter[] }) {
   const student = useStudent();
   const router = useRouter();
   const [progress, setProgress] = useState<Record<string, ProgressRecord>>({});
+  const { me } = useMe(student?.id);
+  const trial = trialOf(me);
 
   useEffect(() => {
     if (student === null) router.replace("/");
@@ -61,6 +66,8 @@ export function ChapterList({ chapters }: { chapters: Chapter[] }) {
           ))}
         </div>
       </header>
+
+      {trial && <TrialBadge trial={trial} />}
 
       {mine.length === 0 && (
         <p className="paper-card rounded-2xl p-6 text-lg">Chapters for class {student.grade} are coming soon.</p>
@@ -116,9 +123,21 @@ export function ChapterList({ chapters }: { chapters: Chapter[] }) {
         })}
       </div>
 
-      <Link href="/" className="self-center text-sm font-semibold text-ink-soft underline underline-offset-4">
-        Change name
-      </Link>
+      {authEnabled ? (
+        <button
+          onClick={async () => {
+            await signOut();
+            router.replace("/");
+          }}
+          className="self-center text-sm font-semibold text-ink-soft underline underline-offset-4"
+        >
+          Sign out
+        </button>
+      ) : (
+        <Link href="/" className="self-center text-sm font-semibold text-ink-soft underline underline-offset-4">
+          Change name
+        </Link>
+      )}
     </div>
   );
 }
