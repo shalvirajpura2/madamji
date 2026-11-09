@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/activity";
 import { store } from "@/lib/store";
 
 // the voice agent reports here: progress, remembered facts and safety alerts
@@ -41,6 +42,35 @@ export async function POST(req: Request) {
       const { type: _type, ...record } = e;
       void _type;
       await store.saveTranscript(record);
+      // close the class in the log; a class that dropped in the first minute gives the trial class back
+      const started = Number(record.startedAt) || Date.now();
+      const ended = Number(record.endedAt) || Date.now();
+      const done = await store.finishClass(String(record.id), {
+        endedAt: new Date(ended).toISOString(),
+        durationSeconds: Math.max(0, Math.round((ended - started) / 1000)),
+        sectionsDone: Number(record.sectionsDone) || 0,
+        sections: Number(record.sections) || 0,
+        completed: Boolean(record.completed),
+        error: record.error ? String(record.error).slice(0, 500) : null,
+      });
+      if (done) {
+        log({
+          kind: "class_finished",
+          studentId: done.studentId,
+          email: done.email,
+          ip: done.ip,
+          detail: {
+            classId: done.id,
+            chapterId: done.chapterId,
+            minutes: done.minutes,
+            status: done.status,
+            durationSeconds: done.durationSeconds,
+            sectionsDone: done.sectionsDone,
+            sections: done.sections,
+            error: done.error,
+          },
+        });
+      }
     } else {
       return NextResponse.json({ error: "unknown event" }, { status: 400 });
     }

@@ -23,16 +23,16 @@ export async function currentUser(): Promise<SignedIn | null> {
  * The student id a request may act as. With sign-in set up it is always the google user's id.
  * Without it (local dev only) the id the browser sent is used, like before.
  */
-export async function studentIdFor(sentId: unknown): Promise<{ id: string } | { error: NextResponse }> {
+export async function studentIdFor(sentId: unknown): Promise<{ id: string; email: string } | { error: NextResponse }> {
   if (authEnabled) {
     const user = await currentUser();
     if (!user) return { error: NextResponse.json({ error: "Please sign in with Google first." }, { status: 401 }) };
-    return { id: user.id };
+    return { id: user.id, email: user.email };
   }
   if (process.env.NODE_ENV === "production") {
     return { error: NextResponse.json({ error: "Sign-in is not set up yet." }, { status: 503 }) };
   }
   const id = String(sentId ?? "").slice(0, 64);
   if (!id) return { error: NextResponse.json({ error: "Tell us your name first." }, { status: 400 }) };
-  return { id };
+  return { id, email: "" };
 }

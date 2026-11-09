@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
+import { checkStaff } from "@/lib/staff";
 import { store } from "@/lib/store";
 
 // staff only: list recent classes, or one class transcript by id
 export async function POST(req: Request) {
   const { passcode, id } = await req.json().catch(() => ({}));
-  const expected = process.env.STAFF_PASSCODE;
-  if (!expected || passcode !== expected) {
-    return NextResponse.json({ error: "Wrong passcode" }, { status: 401 });
-  }
+  const denied = await checkStaff(req, passcode);
+  if (denied) return denied;
   try {
     if (id) {
       const transcript = await store.getTranscript(String(id));
